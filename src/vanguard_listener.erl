@@ -57,11 +57,16 @@ tcp_options(Config) ->
 %% @private
 routes() ->
     [{'_', [
+        %% / -> ./priv/www/index.html
         static([], [{file, <<"index.html">>}]),
+
+        %% /api -> ./priv/www/api/index.html
         static([<<"api">>], [{file, <<"api/index.html">>}]),
 
+        %% /api/* requests
         {[<<"api">>, '...'], vanguard_handler, []},
 
+        %% Static files under ./priv/www
         static(['...'])
     ]}].
 
