@@ -26,7 +26,7 @@ start_link() ->
     ok.
 
 %%
-%% API
+%% Private
 %%
 
 -spec listener(listener()) -> {ok, pid()}.
