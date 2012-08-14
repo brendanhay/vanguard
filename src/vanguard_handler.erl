@@ -17,7 +17,7 @@
          info/3,
          terminate/2]).
 
--define(TIMEOUT, 60000).
+-define(TIMEOUT, 5000).
 
 %%
 %% Callbacks
@@ -34,5 +34,3 @@ info(Message, Req, State) ->
 
 terminate(Req, State) ->
     ok.
-
-

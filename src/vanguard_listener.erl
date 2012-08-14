@@ -52,6 +52,21 @@ tcp_options(Config) ->
     [{ip, vanguard_config:option(ip, Config)},
      {port, vanguard_config:option(port, Config)}|vanguard_config:env(tcp)].
 
+
 -spec routes() -> [_].
 %% @private
-routes() -> [{'_', [{'_', vanguard_handler, []}]}].
+routes() ->
+    [{'_', [
+        {[<<"api">>], vanguard_handler, []},
+        static([<<"api">>, <<"index">>]),
+        {[<<"api">>, '...'], vanguard_handler, []},
+        static(['...'])
+    ]}].
+
+-spec static([binary() | atom()]) -> {}.
+%% @private
+static(Match) ->
+    {Match, cowboy_http_static,
+        [{directory, {priv_dir, vanguard, [<<"www">>]}},
+         {mimetypes, {fun mimetypes:path_to_mimes/2, default}},
+         {etag, {attributes, [filepath, filesize, inode, mtime]}}]}.
