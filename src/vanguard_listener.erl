@@ -54,4 +54,4 @@ tcp_options(Config) ->
 
 -spec routes() -> [_].
 %% @private
-routes() -> [{'_', [{'_', my_handler, []}]}].
+routes() -> [{'_', [{'_', vanguard_handler, []}]}].
