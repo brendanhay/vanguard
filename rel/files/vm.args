@@ -1,15 +1,12 @@
 ## Name of the node
 -sname vanguard
 
-## Cookie
--setcookie 7f20101c7d018aa0c3153349dddf96c96b6bf342
-
 ## Enable kernel poll and a few async threads
 +K true
 +A 60
 
 ## Increase number of concurrent ports/sockets
--env ERL_MAX_PORTS 4096
+-env ERL_MAX_PORTS 8192
 
 ## Tweak GC to run more often
 -env ERL_FULLSWEEP_AFTER 0

@@ -29,13 +29,6 @@ if [ -z "$NAME_ARG" ]; then
     exit 1
 fi
 
-# Extract the target cookie
-COOKIE_ARG=`grep -e '^-setcookie' $RUNNER_ETC_DIR/vm.args`
-if [ -z "$COOKIE_ARG" ]; then
-    echo "vm.args needs to have a -setcookie parameter."
-    exit 1
-fi
-
 # Identify the script name
 SCRIPT=`basename $0`
 
@@ -48,7 +41,7 @@ APP_VSN=${START_ERL#* }
 ERTS_PATH=$RUNNER_BASE_DIR/erts-$ERTS_VSN/bin
 
 # Setup command to control the node
-NODETOOL="$ERTS_PATH/escript $ERTS_PATH/nodetool $NAME_ARG $COOKIE_ARG"
+NODETOOL="$ERTS_PATH/escript $ERTS_PATH/nodetool $NAME_ARG"
 
 # Check the first argument for instructions
 case "$1" in
