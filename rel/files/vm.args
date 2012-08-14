@@ -1,0 +1,20 @@
+## Name of the node
+-sname vanguard
+
+## Cookie
+# -setcookie 7f20101c7d018aa0c3153349dddf96c96b6bf342
+
+## Enable kernel poll and a few async threads
++K true
++A 12
+
+## Increase number of concurrent ports/sockets
+-env ERL_MAX_PORTS 4096
+
+## Tweak GC to run more often
+-env ERL_FULLSWEEP_AFTER 10
+
+## Ensure hidden node and transitive connections
+## don't fuck with backend rabbits!
+-hidden
+-connect_all false

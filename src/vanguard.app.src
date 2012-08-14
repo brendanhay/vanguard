@@ -1,0 +1,34 @@
+{application, vanguard, [
+    {description, "Vanguard"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        lager,
+        cowboy
+    ]},
+    {mod, {vanguard, []}},
+    {env, [
+
+        %% inet:sock_opts
+        {tcp, [
+            {keepalive, true}
+        ]},
+
+        %% Listeners
+        {listeners, [
+            [{ip, "0.0.0.0"},
+             {port, 80},
+             {acceptors, 30}]
+        ]},
+
+        %% Backends
+        {backends, [
+            [{node, 'rabbit@localhost'},
+             {ip, "0.0.0.0"},
+             {port, 55672}]
+        ]}
+
+    ]}
+]}.
