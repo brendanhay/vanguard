@@ -12,6 +12,6 @@
 -env ERL_FULLSWEEP_AFTER 0
 
 ## Ensure hidden node and transitive connections
-## don't fuck with backend rabbits!
+## so it doesn't fuck with backend rabbits!
 -hidden
 -connect_all false

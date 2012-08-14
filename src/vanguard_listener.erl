@@ -57,16 +57,22 @@ tcp_options(Config) ->
 %% @private
 routes() ->
     [{'_', [
-        {[<<"api">>], vanguard_handler, []},
-        static([<<"api">>, <<"index">>]),
+        static([], [{file, <<"index.html">>}]),
+        static([<<"api">>], [{file, <<"api/index.html">>}]),
+
         {[<<"api">>, '...'], vanguard_handler, []},
+
         static(['...'])
     ]}].
 
 -spec static([binary() | atom()]) -> {}.
 %% @private
-static(Match) ->
+static(Match) -> static(Match, []).
+
+-spec static([binary() | atom()], options()) -> {}.
+%% @private
+static(Match, Opts) ->
     {Match, cowboy_http_static,
         [{directory, {priv_dir, vanguard, [<<"www">>]}},
          {mimetypes, {fun mimetypes:path_to_mimes/2, default}},
-         {etag, {attributes, [filepath, filesize, inode, mtime]}}]}.
+         {etag, {attributes, [filepath, filesize, inode, mtime]}}|Opts]}.

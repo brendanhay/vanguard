@@ -13,7 +13,9 @@
 -behaviour(monad).
 
 %% Callbacks
--export(['>>='/2, return/1, fail/1]).
+-export(['>>='/2,
+         return/1,
+         fail/1]).
 
 %%
 %% Callbacks

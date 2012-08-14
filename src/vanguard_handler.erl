@@ -14,23 +14,20 @@
 
 %% Callbacks
 -export([init/3,
-         info/3,
+         handle/2,
          terminate/2]).
-
--define(TIMEOUT, 5000).
 
 %%
 %% Callbacks
 %%
 
 init({tcp, http}, Req, Opts) ->
-    {loop, Req, undefined_state, ?TIMEOUT, hibernate}.
+    {ok, Req, Opts}.
 
-info({reply, Body}, Req, State) ->
-    {ok, Req2} = cowboy_http_req:reply(200, [], Body, Req),
-    {ok, Req2, State};
-info(Message, Req, State) ->
-    {loop, Req, State, hibernate}.
+handle(Req, State) ->
+    lager:info("REQ ~p", [Req]),
+    {ok, NewReq} = cowboy_http_req:reply(200, [], <<"Hello world!">>, Req),
+    {ok, NewReq, State}.
 
-terminate(Req, State) ->
+terminate(_Req, _State) ->
     ok.
