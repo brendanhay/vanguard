@@ -62,14 +62,14 @@ start_link(ProxyId, From, Backends, Req) ->
 %% @doc
 forward(Backends, Req) ->
     ProxyId = make_ref(),
-    vanguard_proxy_sup:start_child([ProxyId, self(), Backends, Req]),
+    {ok, _Pid} = vanguard_proxy_sup:start_child([ProxyId, self(), Backends, Req]),
     {ok, ProxyId}.
 
 %%
 %% Callbacks
 %%
 
--spec init(#s{}) -> {ok, route, #s{}}.
+-spec init(#s{}) -> {ok, execute, #s{}, 0}.
 %% @hidden
 init(State) ->
     lager:info("PROXY-FSM-INIT"),

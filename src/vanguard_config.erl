@@ -21,10 +21,10 @@
 %% API
 %%
 
--spec env(atom()) -> any().
+-spec env(atom()) -> string().
 %% @doc
 env(Key) ->
-    application:load(vanguard),
+    _Load = application:load(vanguard),
     case application:get_env(vanguard, Key) of
         undefined   -> error({config_not_found, Key});
         {ok, Value} -> os(Value)

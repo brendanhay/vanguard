@@ -33,7 +33,7 @@ start() -> start(?MODULE).
 -spec stop() -> ok.
 %% @doc
 stop() ->
-    application:stop(?MODULE),
+    ok = application:stop(?MODULE),
     init:stop().
 
 %%

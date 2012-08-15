@@ -19,34 +19,33 @@
 %% API
 %%
 
--spec start_link() -> ok.
+-spec start_link() -> {ok, [pid()]}.
 %% @doc
-start_link() ->
-    [link(P) || {ok, P} <- [listener(C) || C <- vanguard_config:env(listeners)]],
-    ok.
+start_link() -> {ok, [listener(C) || C <- vanguard_config:env(listeners)]}.
 
 %%
 %% Private
 %%
 
--spec listener(listener()) -> {ok, pid()}.
+-spec listener(listener()) -> pid().
 %% @private
 listener(Config) ->
     Acceptors = vanguard_config:option(acceptors, Config),
-    Tcp = tcp_options(Config),
-    Dispatch = [{dispatch, routes()}],
+    Tcp       = tcp_options(Config),
+    Dispatch  = [{dispatch, routes()}],
     case cowboy:start_listener(http_listener, Acceptors,
                                cowboy_tcp_transport, Tcp,
                                cowboy_http_protocol, Dispatch) of
         {ok, Pid} ->
             lager:info("LISTEN ~s", [vanguard_net:format_ip(Tcp)]),
-            {ok, Pid};
+            link(Pid),
+            Pid;
         Error ->
             lager:error("LISTENER failed to start: ~p", [Error]),
             exit(listener_start_failure)
     end.
 
--spec tcp_options(listener()) -> [proplists:property()].
+-spec tcp_options(listener()) -> options().
 %% @private
 tcp_options(Config) ->
     [{ip, vanguard_config:option(ip, Config)},
