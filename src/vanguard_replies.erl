@@ -45,11 +45,11 @@
 %%
 
 -spec empty() -> replies().
-%% @public
+%% @doc
 empty() -> [].
 
 -spec insert(id(), replies()) -> replies().
-%% @public
+%% @doc
 insert(Id, Replies) ->
     case lists:keymember(Id, ?KEY, Replies) of
         true  -> error("Cannot reset existing id");
@@ -57,7 +57,7 @@ insert(Id, Replies) ->
     end.
 
 -spec set_status(id(), string(), replies()) -> replies().
-%% @public
+%% @doc
 set_status(Id, Status, Replies) ->
     case find(Id, Replies) of
         V when V#r.status =:= undefined -> store(Id, V#r{status = Status}, Replies);
@@ -65,23 +65,23 @@ set_status(Id, Status, Replies) ->
     end.
 
 -spec add_chunk(id(), string(), replies()) -> replies().
-%% @public
+%% @doc
 add_chunk(Id, Chunk, Replies) ->
     Value = find(Id, Replies),
     store(Id, Value#r{chunks = [Chunk|Value#r.chunks]}, Replies).
 
 -spec completed(id(), replies()) -> replies().
-%% @public
+%% @doc
 completed(Id, Replies) ->
     Value = find(Id, Replies),
     store(Id, Value#r{pending = false}, Replies).
 
 -spec pending(replies()) -> non_neg_integer().
-%% @public
+%% @doc
 pending(Replies) -> length([V || V <- Replies, V =:= pending]).
 
 -spec merge(replies()) -> error | {ok, 200, binary()}.
-%% @public
+%% @doc
 merge([])    -> error;
 merge([H|_]) -> {ok, 200, from_chunks(H)}.
 
