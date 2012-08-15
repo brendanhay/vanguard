@@ -70,21 +70,21 @@ WARNINGS=-Werror_handling \
   -Wunderspecs \
   -Wunmatched_returns
 
-APPS=kernel stdlib sasl erts ssl \
-  tools os_mon runtime_tools crypto \
+APPS=kernel stdlib sasl erts ssl observer \
+  tools os_mon runtime_tools crypto otp_mibs \
   inets xmerl webtool snmp public_key \
-  mnesia eunit syntax_tools compiler
+  mnesia eunit syntax_tools compiler hipe
 
 build-plt: all
 	dialyzer --build_plt --output_plt $(PLT) \
 	  --apps $(APPS) $(DEPS)
 
 dialyzer: build
-	dialyzer apps/*/ebin --plt $(PLT) $(WARNINGS) \
+	dialyzer ebin --plt $(PLT) $(WARNINGS) \
 	  | grep -v 'lager_not_running'
 
 xref:
 	$(REBAR) skip_deps=true xref
 
 typer:
-	typer --annotate --plt $(PLT) -I deps/ -I apps/vanguard/ -r apps/
+	typer --annotate --plt $(PLT) -I deps/
