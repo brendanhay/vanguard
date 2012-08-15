@@ -20,6 +20,12 @@
          merge/1]).
 
 %%
+%% Macros
+%%
+
+-define(KEY, 2).
+
+%%
 %% Types
 %%
 
@@ -33,12 +39,6 @@
 -opaque replies() :: [#r{}].
 
 -export_types([replies/0]).
-
-%%
-%% Macros
-%%
-
--define(KEY, 2).
 
 %%
 %% API

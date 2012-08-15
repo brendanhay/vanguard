@@ -38,7 +38,7 @@ start_child(Args) -> supervisor:start_child(?MODULE, Args).
 -spec init([]) -> {ok, {{simple_one_for_one, 10, 10}, [supervisor2:child_spec()]}}.
 %% @hidden
 init([]) ->
-    ProxyFsm = {vanguard_proxy_fsm,
-                {vanguard_proxy_fsm, start_link, []},
-                temporary, 5000, worker, [vanguard_proxy_fsm]},
-    {ok, {{simple_one_for_one, 10, 10}, [ProxyFsm]}}.
+    Proxy = {vanguard_proxy,
+             {vanguard_proxy, start_link, []},
+             temporary, 5000, worker, [vanguard_proxy]},
+    {ok, {{simple_one_for_one, 10, 10}, [Proxy]}}.

@@ -23,7 +23,7 @@
 %%
 
 init({tcp, http}, Req, Backends) ->
-    {ok, ProxyId} = vanguard_proxy_fsm:forward(Backends, Req),
+    {ok, ProxyId} = vanguard_proxy:forward(Backends, Req),
     {loop, Req, ProxyId, ?TIMEOUT * 2, hibernate}.
 
 info({ok, ProxyId, Status, Body}, Req, ProxyId) ->
@@ -34,6 +34,6 @@ info(Msg, Req, ProxyId) ->
     lager:error("UNHANDLED ~p ~p ~p", [Msg, ProxyId, self()]),
     {loop, Req, ProxyId}.
 
-terminate(Req, ProxyId) ->
+terminate(_Req, _ProxyId) ->
     lager:info("TERMINATE ~p", [self()]),
     ok.
