@@ -36,7 +36,7 @@ start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 %% @hidden
 init([]) ->
     %% Ensure the listeners are linked against the supervisor process
-    ok = vanguard_listener:start_link(),
+    {ok, _Pids} = vanguard_listener:start_link(),
     FsmSup = {vanguard_proxy_sup,
               {vanguard_proxy_sup, start_link, []},
               permanent, 5000, supervisor, [vanguard_proxy_sup]},
