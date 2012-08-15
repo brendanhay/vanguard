@@ -4,7 +4,7 @@
 
 REBAR=`which rebar`
 
-.PHONY: build deps
+.PHONY: build deps backends
 
 all: deps build
 

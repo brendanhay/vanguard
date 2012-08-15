@@ -10,6 +10,8 @@
 
 -module(vanguard_replies).
 
+-include("include/vanguard.hrl").
+
 %% API
 -export([empty/0,
          insert/2,
@@ -17,7 +19,7 @@
          add_chunk/3,
          completed/2,
          pending/1,
-         merge/1]).
+         result/1]).
 
 %%
 %% Macros
@@ -80,10 +82,9 @@ completed(Id, Replies) ->
 %% @doc
 pending(Replies) -> length([V || V <- Replies, V =:= pending]).
 
--spec merge(replies()) -> error | {ok, 200, binary()}.
+-spec result(replies()) -> {ok, pos_integer(), [binary()]}.
 %% @doc
-merge([])    -> error;
-merge([H|_]) -> {ok, 200, from_chunks(H)}.
+result(Replies) -> {ok, aggregate_status(Replies), to_json(Replies)}.
 
 %%
 %% Private
@@ -100,6 +101,14 @@ find(Id, Replies) ->
 -spec store(id(), term(), replies()) -> replies().
 %% @private
 store(Id, Value, Replies) -> lists:keystore(Id, ?KEY, Replies, Value).
+
+-spec to_json(replies()) -> [binary()].
+%% @private
+to_json(Replies) -> [from_chunks(R) || R <- Replies].
+
+-spec aggregate_status(replies()) -> pos_integer().
+%% @private
+aggregate_status(Replies) -> 200.
 
 -spec from_chunks(#r{}) -> binary().
 %% @private

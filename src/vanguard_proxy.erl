@@ -144,7 +144,8 @@ wait({?END, ReplyId}, State) ->
 -spec merge(timeout, #s{}) -> {stop, normal, #s{}}.
 %% @hidden
 merge(timeout, State = #s{proxy_id = ProxyId, from = From, replies = Replies}) ->
-    {ok, Status, Merged} = vanguard_replies:merge(Replies),
+    {ok, Status, Chunks} = vanguard_replies:result(Replies),
+    Merged = vanguard_json:merge(Chunks),
     From ! {ok, ProxyId, Status, Merged},
     {stop, normal, State}.
 
