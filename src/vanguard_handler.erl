@@ -10,24 +10,30 @@
 
 -module(vanguard_handler).
 
+-include_lib("cowboy/include/http.hrl").
 -include("include/vanguard.hrl").
 
 %% Callbacks
 -export([init/3,
-         handle/2,
+         info/3,
          terminate/2]).
 
 %%
 %% Callbacks
 %%
 
-init({tcp, http}, Req, Opts) ->
-    {ok, Req, Opts}.
+init({tcp, http}, Req, Backends) ->
+    {ok, ProxyId} = vanguard_proxy_fsm:forward(Backends, Req),
+    {loop, Req, ProxyId, ?TIMEOUT * 2, hibernate}.
 
-handle(Req, State) ->
-    lager:info("REQ ~p", [Req]),
-    {ok, NewReq} = cowboy_http_req:reply(200, [], <<"Hello world!">>, Req),
-    {ok, NewReq, State}.
+info({ok, ProxyId, Status, Body}, Req, ProxyId) ->
+    lager:info("REPLY ~p ~p", [ProxyId, self()]),
+    {ok, NewReq} = cowboy_http_req:reply(Status, [], Body, Req),
+    {ok, NewReq, ProxyId};
+info(Msg, Req, ProxyId) ->
+    lager:error("UNHANDLED ~p ~p ~p", [Msg, ProxyId, self()]),
+    {loop, Req, ProxyId}.
 
-terminate(_Req, _State) ->
+terminate(Req, ProxyId) ->
+    lager:info("TERMINATE ~p", [self()]),
     ok.
