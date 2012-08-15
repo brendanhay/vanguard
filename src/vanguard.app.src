@@ -6,7 +6,8 @@
         kernel,
         stdlib,
         lager,
-        cowboy
+        cowboy,
+        ibrowse
     ]},
     {mod, {vanguard, []}},
     {env, [
@@ -26,8 +27,7 @@
         %% Backends
         {backends, [
             [{node, 'rabbit@localhost'},
-             {ip, "0.0.0.0"},
-             {port, 55672}]
+             {uri, "http://guest:guest@localhost:55672"}]
         ]}
 
     ]}

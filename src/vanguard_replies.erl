@@ -23,7 +23,7 @@
 %% Types
 %%
 
--type id() :: term()
+-type id() :: term().
 
 -record(r, {id             :: term(),
             status         :: undefined | string(),
@@ -56,7 +56,7 @@ insert(Id, Replies) ->
         false -> store(Id, #r{id = Id}, Replies)
     end.
 
--spec set_status(id(), non_neg_integer(), replies()) -> replies().
+-spec set_status(id(), string(), replies()) -> replies().
 %% @public
 set_status(Id, Status, Replies) ->
     case find(Id, Replies) of
@@ -89,7 +89,7 @@ merge([H|_]) -> {ok, 200, from_chunks(H)}.
 %% Private
 %%
 
--spec find(id(), replies()) -> replies().
+-spec find(id(), replies()) -> tuple().
 %% @private
 find(Id, Replies) ->
     case lists:keyfind(Id, ?KEY, Replies) of

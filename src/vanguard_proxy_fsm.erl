@@ -40,7 +40,7 @@
             from     :: pid(),
             backends :: [backend()],
             req      :: #http_req{},
-            replies  :: gb_tree()}).
+            replies  :: vanguard_replies:replies()}).
 
 -define(TIMEOUT_MSG, request_timeout).
 -define(HEADERS,     ibrowse_async_headers).
@@ -134,19 +134,21 @@ merge(timeout, State = #s{proxy_id = ProxyId, from = From, replies = Replies}) -
 %% Private
 %%
 
-%% -spec update_replies
+-spec update_replies(fun((vanguard_replies:replies()) -> vanguard_replies:replies()), #s{})
+    -> #s{}.
 %% @private
 update_replies(F, State = #s{replies = Replies}) -> State#s{replies = F(Replies)}.
 
 %% @private
 schedule_timeout() -> erlang:send_after(?TIMEOUT, self(), ?TIMEOUT_MSG).
 
--spec multi_request([string()], #http_req{}) -> {ok, gb_tree()}.
+-spec multi_request([string()], #http_req{}) -> {ok, vanguard_replies:replies()}.
 %% @private
 multi_request(Backends, Req) ->
     multi_request(Backends, Req, vanguard_replies:empty()).
 
--spec multi_request([backend()], #http_req{}, [_]) -> {ok, gb_tree()}.
+-spec multi_request([backend()], #http_req{}, vanguard_replies:replies())
+    -> {ok, vanguard_replies:replies()}.
 %% @private
 multi_request([], _Req, Replies) ->
     {ok, Replies};
@@ -154,7 +156,7 @@ multi_request([H|T], Req, Replies) ->
     {ibrowse_req_id, Id} = request(H, Req),
     multi_request(T, Req, vanguard_replies:insert(Id, Replies)).
 
--spec request(backend(), #http_req{}) -> {ibrowse_req_id, _}.
+-spec request(backend(), #http_req{}) -> {ibrowse_req_id, term()}.
 %% @private
 request(Backend, Req) ->
     Uri = uri(Backend, Req),
@@ -167,7 +169,7 @@ uri(Backend, #http_req{raw_path = Path, raw_qs = Query}) ->
     Base = vanguard_config:option(uri, Backend),
     string:join([Base, tl(binary_to_list(Path)), binary_to_list(Query)], "/").
 
--spec method(#http_req{}) -> atom().
+-spec method(#http_req{}) -> get | post.
 %% @private
 method(#http_req{method = Method}) ->
     list_to_atom(string:to_lower(atom_to_list(Method))).
