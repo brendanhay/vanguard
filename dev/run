@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# tmp, .gitignored
+rm -rf ./dev/tmp && mkdir -p ./dev/tmp/{logs,mnesia}
+
+# Procfile
+PROC=./dev/tmp/Procfile
+
+# Init
+:> $PROC
+
+# Start of the available port range
+PORT=5672
+
+for file in ./dev/*.config
+do
+    # Increment the port range
+    PORT=$[$PORT + 1]
+
+    # Get the name from the config file, minus the ext
+    path=$(basename "${file}")
+    name="${path%.*}"
+
+    # Specify the env variables
+    env="RABBITMQ_NODENAME=${name}
+         RABBITMQ_NODE_PORT=${PORT}
+         RABBITMQ_CONFIG_FILE=../${name}
+         RABBITMQ_ENABLED_PLUGINS_FILE=../enabled_plugins
+         RABBITMQ_MNESIA_BASE=./mnesia
+         RABBITMQ_LOG_BASE=./logs"
+
+    # Command to run from the wrapper
+    cmd=`echo "${env} rabbitmq-server" | tr -s " " | tr "\n" " "`
+
+    # Wrapper script for Procfile command
+    wrapper=./dev/tmp/$name
+
+    # Add the command to the wrapper, wiping existing contents
+    echo $cmd > $wrapper
+
+    # Make wrapper executable
+    chmod +x $wrapper
+
+    # Add a line to the Procfile
+    echo "${name}: ./${name}" >> $PROC
+done
+
+foreman start -f $PROC
