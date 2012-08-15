@@ -32,7 +32,7 @@
                      {port, inet:port_number()}].
 
 -type backend()  :: [{node, node()} |
-                     {ip, inet:hostname()} |
+                     {host, string()} |
                      {port, inet:port_number()}].
 
 %%
@@ -43,8 +43,10 @@
 -type truth_m() :: true | false.
 
 %%
-%% Records
+%% Macros
 %%
+
+-define(TIMEOUT, 3000).
 
 %%
 %% Tests
