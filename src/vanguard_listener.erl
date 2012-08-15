@@ -50,12 +50,13 @@ listener(Config) ->
 %% @private
 tcp_options(Config) ->
     [{ip, vanguard_config:option(ip, Config)},
-     {port, vanguard_config:option(port, Config)}|vanguard_config:env(tcp)].
-
+     {port, vanguard_config:option(port, Config)}|
+     vanguard_config:env(tcp)].
 
 -spec routes() -> [_].
 %% @private
 routes() ->
+    Backends = vanguard_config:env(backends),
     [{'_', [
         %% / -> ./priv/www/index.html
         static([], [{file, <<"index.html">>}]),
@@ -64,7 +65,7 @@ routes() ->
         static([<<"api">>], [{file, <<"api/index.html">>}]),
 
         %% /api/* requests
-        {[<<"api">>, '...'], vanguard_handler, []},
+        {[<<"api">>, '...'], vanguard_handler, Backends},
 
         %% Static files under ./priv/www
         static(['...'])
@@ -80,4 +81,5 @@ static(Match, Opts) ->
     {Match, cowboy_http_static,
         [{directory, {priv_dir, vanguard, [<<"www">>]}},
          {mimetypes, {fun mimetypes:path_to_mimes/2, default}},
-         {etag, {attributes, [filepath, filesize, inode, mtime]}}|Opts]}.
+         {etag, {attributes, [filepath, filesize, inode, mtime]}}|
+         Opts]}.
