@@ -2,6 +2,7 @@
 .git
 .gitignore
 .pkgignore
+.travis.yml
 Makefile
 Procfile
 README.md
@@ -14,3 +15,5 @@ log
 plt
 priv
 test
+rebar
+rebar.config
