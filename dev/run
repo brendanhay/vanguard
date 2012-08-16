@@ -17,7 +17,6 @@ DELAY=1
 
 for file in ./dev/*.config
 do
-
     # Get the name from the config file, minus the ext
     path=$(basename "${file}")
     name="${path%.*}"
