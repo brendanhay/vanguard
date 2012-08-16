@@ -12,10 +12,11 @@ PROC=./dev/tmp/Procfile
 # Start of the available port range
 PORT=5672
 
+# Delay between Proctype starts
+DELAY=1
+
 for file in ./dev/*.config
 do
-    # Increment the port range
-    PORT=$[$PORT + 1]
 
     # Get the name from the config file, minus the ext
     path=$(basename "${file}")
@@ -30,7 +31,7 @@ do
          RABBITMQ_LOG_BASE=./logs"
 
     # Command to run from the wrapper
-    cmd=`echo "${env} rabbitmq-server" | tr -s " " | tr "\n" " "`
+    cmd=`echo "sleep ${DELAY}; ${env} rabbitmq-server" | tr -s " " | tr "\n" " "`
 
     # Wrapper script for Procfile command
     wrapper=./dev/tmp/$name
@@ -43,6 +44,12 @@ do
 
     # Add a line to the Procfile
     echo "${name}: ./${name}" >> $PROC
+
+    # Increment the port range
+    PORT=$[$PORT + 1]
+
+    # Increment the delay
+    DELAY=$[$DELAY + 2]
 done
 
 foreman start -f $PROC
