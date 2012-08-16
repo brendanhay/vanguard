@@ -66,34 +66,11 @@ merge(L, _R) -> L.
 -spec merge_properties(A, A) -> A.
 %% @private
 %% Properties
-
-%% %% Identical Key/Value
-%% merge_properties([H|L], [H|R], Acc) ->
-%%     merge_properties(L, R, [H|Acc]);
-
-%% %% %% Search for the Key of Left, in Right
-%% %% merge_properties([H = {K, _V}|L], R, Acc) ->
-%% %%     {T, NewAcc} =
-%% %%         case lists:keytake(K, 1, R) of
-%% %%             {value, Prop, Rest} -> {Rest, [merge(H, Prop)|Acc]};
-%% %%             false               -> {R, [H|Acc]}
-%% %%         end,
-%% %%     merge_properties(L, T, NewAcc).
-
-%% Search for the Key of Left, in Right
 merge_properties([], R) ->
     R;
 merge_properties([{K, LV}|L], R) ->
     Value = case lists:keyfind(K, 1, R) of
-                {K, RV} -> lager:info("MERGE: ~p - ~p, ~p", [K, LV, RV]), merge(LV, RV);
+                {K, RV} -> merge(LV, RV);
                 false   -> LV
             end,
     merge_properties(L, lists:keystore(K, 1, R, {K, Value})).
-
-%% def merge(d1, d2):
-%%     for k1,v1 in d1.iteritems():
-%%         if not k1 in d2:
-%%             d2[k1] = v1
-%%         elif isinstance(v1, dict):
-%%             merge(v1, d2[k1])
-%%     return d2

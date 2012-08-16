@@ -26,27 +26,19 @@
 %%
 
 -type options()  :: [proplists:property()].
--type address()  :: {inet:hostname() | inet:ip_address(), inet:port_number()}.
-
--type listener() :: [{ip, inet:hostname()} |
-                     {port, inet:port_number()}].
-
--type backend()  :: [{node, node()} |
-                     {host, string()} |
-                     {port, inet:port_number()}].
+-type backend()  :: [string()].
 
 %%
 %% Monads
 %%
 
 -type error_m(Result, Error) :: ok | {ok, Result} | {error, Error}.
--type truth_m() :: true | false.
 
 %%
 %% Macros
 %%
 
--define(TIMEOUT, 4500).
+-define(TIMEOUT, 2000).
 
 %%
 %% Tests

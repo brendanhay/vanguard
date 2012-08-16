@@ -10,25 +10,5 @@
         ibrowse
     ]},
     {mod, {vanguard, []}},
-    {env, [
-
-        %% inet:sock_opts
-        {tcp, []},
-
-        %% Listeners
-        {listeners, [
-            [{ip, "0.0.0.0"},
-             {port, 8080},
-             {acceptors, 30}]
-        ]},
-
-        %% Backends
-        {backends, [
-            [{node, 'chinchilla@localhost'},
-             {uri, "http://guest:guest@localhost:55670"}],
-            [{node, 'rabbit@localhost'},
-             {uri, "http://guest:guest@localhost:55680"}]
-        ]}
-
-    ]}
+    {env, []}
 ]}.

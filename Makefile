@@ -6,22 +6,23 @@ REBAR=`which rebar`
 
 .PHONY: build deps backends
 
-all: deps build
+all: deps compile
 
 clean:
 	rm -rf ebin
 	rm -rf log
 	rm -rf logs
+	rm -rf rel/package
 	$(REBAR) skip_deps=true clean
 
 deps:
 	$(REBAR) get-deps
 
-build:
+compile:
 	$(REBAR) compile
 	$(MAKE) xref
 
-package: all
+build: all
 	rm -rf rel/package
 	$(REBAR) generate -f
 
@@ -50,13 +51,13 @@ ERL=exec erl -pa ebin $(DEPS) -sname vanguard -hidden -connect_all false
 
 .PHONY: boot noboot
 
-console: package
+console: build
 	rel/package/bin/vanguard console
 
-boot: build
+boot: compile
 	$(ERL) -s vanguard
 
-noboot: build
+noboot: compile
 	$(ERL)
 
 #

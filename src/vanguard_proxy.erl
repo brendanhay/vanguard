@@ -187,8 +187,7 @@ request(Backend, Req) ->
 -spec uri(backend(), #http_req{}) -> string().
 %% @private
 uri(Backend, #http_req{raw_path = Path, raw_qs = Query}) ->
-    Base = vanguard_config:option(uri, Backend),
-    string:join([Base, tl(binary_to_list(Path)), binary_to_list(Query)], "/").
+    string:join([Backend, tl(binary_to_list(Path)), binary_to_list(Query)], "/").
 
 -spec method(#http_req{}) -> get | post.
 %% @private

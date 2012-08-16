@@ -19,19 +19,19 @@
 %% API
 %%
 
--spec start_link() -> {ok, [pid()]}.
+-spec start_link() -> {ok, pid()}.
 %% @doc
-start_link() -> {ok, [listener(C) || C <- vanguard_config:env(listeners)]}.
+start_link() -> {ok, listener()}.
 
 %%
 %% Private
 %%
 
--spec listener(listener()) -> pid().
+-spec listener() -> pid().
 %% @private
-listener(Config) ->
-    Acceptors = vanguard_config:option(acceptors, Config),
-    Tcp       = tcp_options(Config),
+listener() ->
+    Acceptors = vanguard_config:acceptors(),
+    Tcp       = [{ip, vanguard_config:ip()}, {port, vanguard_config:port()}],
     Dispatch  = [{dispatch, routes()}],
     case cowboy:start_listener(http_listener, Acceptors,
                                cowboy_tcp_transport, Tcp,
@@ -45,17 +45,10 @@ listener(Config) ->
             exit(listener_start_failure)
     end.
 
--spec tcp_options(listener()) -> options().
-%% @private
-tcp_options(Config) ->
-    [{ip, vanguard_config:option(ip, Config)},
-     {port, vanguard_config:option(port, Config)}|
-     vanguard_config:env(tcp)].
-
 -spec routes() -> [_].
 %% @private
 routes() ->
-    Backends = vanguard_config:env(backends),
+    Backends = vanguard_config:backends(),
     [{'_', [
         %% / -> ./priv/www/index.html
         static([], [{file, <<"index.html">>}]),

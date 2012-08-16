@@ -13,32 +13,31 @@
 -include("include/vanguard.hrl").
 
 %% API
--export([env/1,
-         os/1,
+-export([ip/0,
+         port/0,
+         acceptors/0,
+         backends/0,
          option/2]).
 
 %%
 %% API
 %%
 
--spec env(atom()) -> string().
+-spec ip() -> inet:ip_address().
 %% @doc
-env(Key) ->
-    _Load = application:load(vanguard),
-    case application:get_env(vanguard, Key) of
-        undefined   -> error({config_not_found, Key});
-        {ok, Value} -> os(Value)
-    end.
+ip() -> {0,0,0,0}.
 
--spec os(atom() | string()) -> string().
+-spec port() -> inet:port_number().
 %% @doc
-os(Key) when is_atom(Key) ->
-    case os:getenv(atom_to_list(Key)) of
-        false -> error({env_not_set, Key});
-        Env   -> Env
-    end;
-os(Key) ->
-    Key.
+port() -> list_to_integer(os("PORT")).
+
+-spec acceptors() -> pos_integer().
+%% @doc
+acceptors() -> 50.
+
+-spec backends() -> [backend()].
+%% @doc
+backends() -> string:tokens(os("BACKENDS"), ",").
 
 -spec option(ip | atom(), options()) ->  inet:ip_address() | any().
 %% @doc
@@ -51,6 +50,14 @@ option(Key, Opts) ->
 %%
 %% Private
 %%
+
+-spec os(string()) -> string().
+%% @doc
+os(Key) ->
+    case os:getenv(Key) of
+        false -> error({env_not_set, Key});
+        Env   -> Env
+    end.
 
 -spec lookup_option(atom(), options()) -> any().
 %% @private
