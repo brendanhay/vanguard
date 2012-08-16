@@ -13,26 +13,10 @@
 -include("include/vanguard.hrl").
 
 %% API
--export([merge/1]).
-
-%%
-%% Macros
-%%
-
-%%
-%% Types
-%%
+-export([merge/2]).
 
 %%
 %% API
-%%
-
--spec merge([A]) -> A.
-%% @doc
-merge(Chunks) -> lists:foldl(merge(_, _), [], Chunks).
-
-%%
-%% Private
 %%
 
 %% JSON            Erlang
@@ -53,11 +37,53 @@ merge(Chunks) -> lists:foldl(merge(_, _), [], Chunks).
 
 -spec merge(A, A) -> A.
 %% @private
-%% Two Lists
-merge(A, B) when is_list(A) andalso is_list(B) ->
-    lists:usort(A ++ B);
-%% Object Keys
-merge({Key, A}, {Key, B}) ->
-    {Key, merge(A, B)};
-%% Whatevers, Bro
-merge(A, A) -> A.
+%% Numbers
+merge(L, R) when is_number(L), is_number(R) -> L + R;
+
+%% Lists
+merge(L, R) when is_list(L), is_list(R) -> lists:usort(L ++ R);
+
+%% Objects
+merge({L}, {R}) -> {merge_properties(L, R)};
+
+%% Object Key/Values
+merge({Key, A}, {Key, B}) -> {Key, merge(A, B)};
+
+%% %% Comparison
+merge(L, L) -> L;
+
+%% Dev
+merge(L, _R) -> L.
+
+%%
+%% Private
+%%
+
+-spec merge_properties(A, A) -> A.
+%% @private
+%% Properties
+merge_properties(L, R) -> merge_properties(L, R, []).
+
+-spec merge_properties(A, A, A) -> A.
+%% @private
+%% Empty right properties
+merge_properties(L, [], Acc) ->
+    Acc ++ L;
+
+%% Empty left properties
+merge_properties([], R, Acc) ->
+    Acc ++ R;
+
+%% Identical Key/Value
+merge_properties([H|L], [H|R], Acc) ->
+    merge_properties(L, R, [H|Acc]);
+
+%% Search for the Key of Left, in Right
+merge_properties([H = {K, _V}|L], R, Acc) ->
+    {T, NewAcc} =
+        case lists:keytake(K, 1, R) of
+            {value, Prop, Rest} -> {Rest, [merge(H, Prop)|Acc]};
+            false               -> {R, [H|Acc]}
+        end,
+    merge_properties(L, T, NewAcc).
+

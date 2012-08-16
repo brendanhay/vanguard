@@ -80,7 +80,7 @@ completed(Id, Replies) ->
 
 -spec pending(replies()) -> non_neg_integer().
 %% @doc
-pending(Replies) -> length([V || V <- Replies, V =:= pending]).
+pending(Replies) -> length([R || R <- Replies, R#r.pending]).
 
 -spec result(replies()) -> {ok, pos_integer(), [binary()]}.
 %% @doc
@@ -108,7 +108,7 @@ to_json(Replies) -> [from_chunks(R) || R <- Replies].
 
 -spec aggregate_status(replies()) -> pos_integer().
 %% @private
-aggregate_status(Replies) -> 200.
+aggregate_status(_Replies) -> 200.
 
 -spec from_chunks(#r{}) -> binary().
 %% @private

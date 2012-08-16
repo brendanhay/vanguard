@@ -127,26 +127,29 @@ execute(timeout, State = #s{backends = Backends, req = Req}) ->
 -spec wait(ibrowse_response(), #s{}) -> {next_state, wait | merge, #s{}}.
 %% @hidden
 wait({?HEADERS, ReplyId, Status, _Headers}, State) ->
+    lager:info("HEADERS ~p", [ReplyId]),
     F = vanguard_replies:set_status(ReplyId, Status, _),
     {next_state, wait, update_replies(F, State)};
 wait({?CHUNK, ReplyId, Content}, State) ->
+    lager:info("CHUNK ~p", [ReplyId]),
     F = vanguard_replies:add_chunk(ReplyId, Content, _),
     {next_state, wait, update_replies(F, State)};
 wait({?END, ReplyId}, State) ->
+    lager:info("END ~p", [ReplyId]),
     F = vanguard_replies:completed(ReplyId, _),
     NewState = update_replies(F, State),
-    Next     = case vanguard_replies:pending(NewState#s.replies) of
-                   0  -> merge;
-                   _N -> wait
-               end,
-    {next_state, Next, NewState, 0}.
+    case vanguard_replies:pending(NewState#s.replies) of
+        0  -> {next_state, merge, NewState, 0};
+        _N -> {next_state, wait, NewState}
+    end.
 
 -spec merge(timeout, #s{}) -> {stop, normal, #s{}}.
 %% @hidden
 merge(timeout, State = #s{proxy_id = ProxyId, from = From, replies = Replies}) ->
     {ok, Status, Chunks} = vanguard_replies:result(Replies),
-    Merged = vanguard_json:merge(Chunks),
-    From ! {ok, ProxyId, Status, Merged},
+    Json = [jiffy:decode(C) || C <- Chunks],
+    Merged = lists:foldl(vanguard_json:merge(_, _), [], Json),
+    From ! {ok, ProxyId, Status, jiffy:encode(Merged)},
     {stop, normal, State}.
 
 %%
