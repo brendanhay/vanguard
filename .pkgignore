@@ -15,5 +15,6 @@ log
 plt
 priv
 test
-rebar
+bin
+dev
 rebar.config

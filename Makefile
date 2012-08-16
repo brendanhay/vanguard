@@ -2,7 +2,7 @@
 # Targets
 #
 
-REBAR=./rebar
+REBAR=./bin/rebar
 
 .PHONY: build deps backends
 
