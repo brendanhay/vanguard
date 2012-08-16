@@ -127,7 +127,6 @@ execute(timeout, State = #s{backends = Backends, req = Req}) ->
 -spec wait(ibrowse_response(), #s{}) -> {next_state, wait | merge, #s{}}.
 %% @hidden
 wait({?HEADERS, ReplyId, Status, _Headers}, State) ->
-    lager:info("HEADERS ~p", [ReplyId]),
     F = vanguard_replies:set_status(ReplyId, Status, _),
     {next_state, wait, update_replies(F, State)};
 wait({?CHUNK, ReplyId, Content}, State) ->
@@ -146,10 +145,8 @@ wait({?END, ReplyId}, State) ->
 -spec merge(timeout, #s{}) -> {stop, normal, #s{}}.
 %% @hidden
 merge(timeout, State = #s{proxy_id = ProxyId, from = From, replies = Replies}) ->
-    {ok, Status, Chunks} = vanguard_replies:result(Replies),
-    Json = [jiffy:decode(C) || C <- Chunks],
-    Merged = lists:foldl(vanguard_json:merge(_, _), [], Json),
-    From ! {ok, ProxyId, Status, jiffy:encode(Merged)},
+    {ok, Status, Merged} = vanguard_replies:result(Replies),
+    From ! {ok, ProxyId, Status, Merged},
     {stop, normal, State}.
 
 %%

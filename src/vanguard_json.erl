@@ -40,6 +40,10 @@
 %% Numbers
 merge(L, R) when is_number(L), is_number(R) -> L + R;
 
+%% Rabbit empty objects
+merge([], R) -> R;
+merge(L, []) -> L;
+
 %% Lists
 merge(L, R) when is_list(L), is_list(R) -> lists:usort(L ++ R);
 
@@ -62,28 +66,34 @@ merge(L, _R) -> L.
 -spec merge_properties(A, A) -> A.
 %% @private
 %% Properties
-merge_properties(L, R) -> merge_properties(L, R, []).
 
--spec merge_properties(A, A, A) -> A.
-%% @private
-%% Empty right properties
-merge_properties(L, [], Acc) ->
-    Acc ++ L;
+%% %% Identical Key/Value
+%% merge_properties([H|L], [H|R], Acc) ->
+%%     merge_properties(L, R, [H|Acc]);
 
-%% Empty left properties
-merge_properties([], R, Acc) ->
-    Acc ++ R;
-
-%% Identical Key/Value
-merge_properties([H|L], [H|R], Acc) ->
-    merge_properties(L, R, [H|Acc]);
+%% %% %% Search for the Key of Left, in Right
+%% %% merge_properties([H = {K, _V}|L], R, Acc) ->
+%% %%     {T, NewAcc} =
+%% %%         case lists:keytake(K, 1, R) of
+%% %%             {value, Prop, Rest} -> {Rest, [merge(H, Prop)|Acc]};
+%% %%             false               -> {R, [H|Acc]}
+%% %%         end,
+%% %%     merge_properties(L, T, NewAcc).
 
 %% Search for the Key of Left, in Right
-merge_properties([H = {K, _V}|L], R, Acc) ->
-    {T, NewAcc} =
-        case lists:keytake(K, 1, R) of
-            {value, Prop, Rest} -> {Rest, [merge(H, Prop)|Acc]};
-            false               -> {R, [H|Acc]}
-        end,
-    merge_properties(L, T, NewAcc).
+merge_properties([], R) ->
+    R;
+merge_properties([{K, LV}|L], R) ->
+    Value = case lists:keyfind(K, 1, R) of
+                {K, RV} -> lager:info("MERGE: ~p - ~p, ~p", [K, LV, RV]), merge(LV, RV);
+                false   -> LV
+            end,
+    merge_properties(L, lists:keystore(K, 1, R, {K, Value})).
 
+%% def merge(d1, d2):
+%%     for k1,v1 in d1.iteritems():
+%%         if not k1 in d2:
+%%             d2[k1] = v1
+%%         elif isinstance(v1, dict):
+%%             merge(v1, d2[k1])
+%%     return d2

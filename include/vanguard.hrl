@@ -46,7 +46,7 @@
 %% Macros
 %%
 
--define(TIMEOUT, 3000).
+-define(TIMEOUT, 4500).
 
 %%
 %% Tests

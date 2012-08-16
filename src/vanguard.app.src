@@ -13,9 +13,7 @@
     {env, [
 
         %% inet:sock_opts
-        {tcp, [
-            {keepalive, true}
-        ]},
+        {tcp, []},
 
         %% Listeners
         {listeners, [

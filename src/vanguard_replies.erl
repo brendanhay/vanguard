@@ -84,7 +84,10 @@ pending(Replies) -> length([R || R <- Replies, R#r.pending]).
 
 -spec result(replies()) -> {ok, pos_integer(), [binary()]}.
 %% @doc
-result(Replies) -> {ok, aggregate_status(Replies), to_json(Replies)}.
+result(Replies) ->
+    Terms  = from_json(Replies),
+    Merged = lists:foldl(vanguard_json:merge(_, _), [], Terms),
+    {ok, aggregate_status(Replies), jiffy:encode(Merged)}.
 
 %%
 %% Private
@@ -102,9 +105,10 @@ find(Id, Replies) ->
 %% @private
 store(Id, Value, Replies) -> lists:keystore(Id, ?KEY, Replies, Value).
 
--spec to_json(replies()) -> [binary()].
+-spec from_json(replies()) -> [term()].
 %% @private
-to_json(Replies) -> [from_chunks(R) || R <- Replies].
+from_json(Replies) ->
+    [jiffy:decode(B) || B <- [from_chunks(R) || R <- Replies], B =/= <<>>].
 
 -spec aggregate_status(replies()) -> pos_integer().
 %% @private
@@ -113,3 +117,4 @@ aggregate_status(_Replies) -> 200.
 -spec from_chunks(#r{}) -> binary().
 %% @private
 from_chunks(#r{chunks = Chunks}) -> iolist_to_binary(Chunks).
+
