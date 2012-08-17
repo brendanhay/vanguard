@@ -111,19 +111,19 @@ case "$1" in
         $ERTS_PATH/to_erl $PIPE_DIR
         ;;
 
-    console|console_clean)
+    console|noshell)
         # .boot file typically just $SCRIPT (ie, the app name)
         # however, for debugging, sometimes start_clean.boot is useful:
         case "$1" in
-            console)        BOOTFILE=$SCRIPT ;;
-            console_clean)  BOOTFILE=start_clean ;;
+            console)  NOSHELL="" ;;
+            noshell)  NOSHELL="-noshell" ;;
         esac
         # Setup beam-required vars
         ROOTDIR=$RUNNER_BASE_DIR
         BINDIR=$ROOTDIR/erts-$ERTS_VSN/bin
         EMU=beam
         PROGNAME=`echo $0 | sed 's/.*\\///'`
-        CMD="$BINDIR/erlexec -boot $RUNNER_BASE_DIR/releases/$APP_VSN/$BOOTFILE -embedded -config $RUNNER_ETC_DIR/app.config -args_file $RUNNER_ETC_DIR/vm.args -- ${1+"$@"}"
+        CMD="$BINDIR/erlexec -boot $RUNNER_BASE_DIR/releases/$APP_VSN/$SCRIPT $NOSHELL -embedded -config $RUNNER_ETC_DIR/app.config -args_file $RUNNER_ETC_DIR/vm.args -- ${1+"$@"}"
         export EMU
         export ROOTDIR
         export BINDIR
@@ -141,7 +141,7 @@ case "$1" in
         ;;
 
     *)
-        echo "Usage: $SCRIPT {start|stop|restart|reboot|ping|console|console_clean|attach}"
+        echo "Usage: $SCRIPT {start|stop|restart|reboot|ping|console|noshell|attach}"
         exit 1
         ;;
 esac
