@@ -34,7 +34,7 @@
 -type id() :: term().
 
 -record(r, {id             :: term(),
-            status         :: undefined | string(),
+            status         :: undefined | pos_integer(),
             chunks = []    :: [string()],
             pending = true :: boolean()}).
 
@@ -58,8 +58,10 @@ insert(Id, Replies) ->
         false -> store(Id, #r{id = Id}, Replies)
     end.
 
--spec set_status(id(), string(), replies()) -> replies().
+-spec set_status(id(), string() | pos_integer(), replies()) -> replies().
 %% @doc
+set_status(Id, Status, Replies) when is_list(Status) ->
+    set_status(Id, list_to_integer(Status), Replies);
 set_status(Id, Status, Replies) ->
     case find(Id, Replies) of
         V when V#r.status =:= undefined -> store(Id, V#r{status = Status}, Replies);
@@ -85,9 +87,9 @@ pending(Replies) -> length([R || R <- Replies, R#r.pending]).
 -spec result(replies()) -> {ok, pos_integer(), [binary()]}.
 %% @doc
 result(Replies) ->
-    Terms  = from_json(Replies),
-    Merged = lists:foldl(vanguard_json:merge(_, _), [], Terms),
-    {ok, aggregate_status(Replies), jiffy:encode(Merged)}.
+    {Status, NewReplies} = aggr(Replies),
+    Merged = lists:foldl(vanguard_json:merge(_, _), [], from_json(NewReplies)),
+    {ok, Status, jiffy:encode(Merged)}.
 
 %%
 %% Private
@@ -105,16 +107,29 @@ find(Id, Replies) ->
 %% @private
 store(Id, Value, Replies) -> lists:keystore(Id, ?KEY, Replies, Value).
 
+-spec aggr(replies()) -> {pos_integer(), [_]}.
+%% @private
+aggr(Replies) -> aggr(Replies, {[], []}).
+
+-spec aggr(replies(), {[_], [_]}) -> {pos_integer(), [_]}.
+%% @private
+aggr([], {S, E}) when length(S) =:= 0 ->
+    {500, E};
+aggr([], {S, _E}) ->
+    {200, S};
+aggr([R = #r{status = Status} | T], Acc = {S, E}) ->
+    aggr(T, case Status of
+                200    -> {[R | S], E};
+                500    -> {S, [R | E]};
+                _Other -> Acc
+            end).
+
 -spec from_json(replies()) -> [term()].
 %% @private
 from_json(Replies) ->
-    [jiffy:decode(B) || B <- [from_chunks(R) || R <- Replies], B =/= <<>>].
+    [jiffy:decode(C) || C <- from_chunks(Replies), C =/= <<>>].
 
--spec aggregate_status(replies()) -> pos_integer().
+-spec from_chunks(replies) -> [binary()].
 %% @private
-aggregate_status(_Replies) -> 200.
-
--spec from_chunks(#r{}) -> binary().
-%% @private
-from_chunks(#r{chunks = Chunks}) -> iolist_to_binary(Chunks).
-
+from_chunks(Replies) ->
+    [iolist_to_binary(C) || #r{chunks = C} <- Replies, C =/= []].

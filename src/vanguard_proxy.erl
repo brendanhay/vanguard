@@ -172,7 +172,7 @@ multi_request(Backends, Req) ->
 %% @private
 multi_request([], _Req, Replies) ->
     {ok, Replies};
-multi_request([H|T], Req, Replies) ->
+multi_request([H | T], Req, Replies) ->
     Id = request(H, Req),
     multi_request(T, Req, vanguard_replies:insert(Id, Replies)).
 
@@ -187,7 +187,11 @@ request(Backend, Req) ->
 -spec uri(backend(), #http_req{}) -> string().
 %% @private
 uri(Backend, #http_req{raw_path = Path, raw_qs = Query}) ->
-    string:join([Backend, tl(binary_to_list(Path)), binary_to_list(Query)], "/").
+    Base = string:join([Backend, tl(binary_to_list(Path))], "/"),
+    case Query of
+        <<>>  -> Base;
+        _Else -> string:join([Base, binary_to_list(Query)], "?")
+    end.
 
 -spec method(#http_req{}) -> get | post.
 %% @private
