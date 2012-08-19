@@ -53,10 +53,10 @@ ERL=exec erl -pa ebin $(DEPS) -sname vanguard -hidden -connect_all false
 
 .PHONY: dev
 
-console: compile
+console: build
 	rel/package/bin/vanguard console
 
-noconsole: compile
+noconsole: build
 	rel/package/bin/vanguard noconsole
 
 boot: compile
