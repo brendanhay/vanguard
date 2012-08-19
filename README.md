@@ -19,7 +19,7 @@ Table of Contents
 Introduction
 ------------
 
-![Vanguard](github.com/brendanhay/vanguard/screenshots/vanguard.png)
+![Vanguard](https://raw.github.com/brendanhay/vanguard/master/img/vanguard.png)
 
 
 <a name="run" />
