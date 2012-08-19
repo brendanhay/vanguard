@@ -17,4 +17,5 @@ priv
 test
 bin
 dev
+img
 rebar.config
