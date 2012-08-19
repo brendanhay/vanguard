@@ -21,28 +21,25 @@ Introduction
 
 At [SoundCloud](http://soundcloud.com) we have a number of disparate RabbitMQ instances which are all loosely related and interconnected via federation links or shovel configurations.
 
-While the default RabbitMQ Management UI works great for cluster overviews, it's definitely a chore in an unclustered topology to have check many instances of the Management UI to get a feel for node health and thoroughput.
+While the default RabbitMQ Management UI works great for cluster overviews, it's a chore in an unclustered topology to have check many instances of the Management UI to get a feel for node health and thoroughput.
 
-Vanguard is an attempt at keeping the UI useful and accessible by providing a very lightweight proxy server which runs the Management UI, calls out to seperate
-backend API instances, aggregates/munges/unions the result, and presents it back to the user in the standard UI.
+Vanguard is an attempt at keeping the UI useful and accessible in the above scenario by providing a very lightweight proxy server which runs the Management UI, calls out to seperate backend API instances, aggregates/munges/unions the result, and presents it back to the user in the standard UI.
 
-The following screenshot shows Vanguard serving the Management UI for two seperate RabbitMQ backends which are not clustered in any way:
+The following screenshot shows Vanguard serving the Management UI for two seperate RabbitMQ backends which are not clustered:
 
 ![Vanguard](https://raw.github.com/brendanhay/vanguard/master/img/vanguard.png)
 
-Vanguard ships with a copy of the static assets from the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin, which at the time of writing is at version `2.8.4`.
+Vanguard ships with a copy of the static assets from the `2.8.4` version of the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin so if you have an older version of RabbitMQ than `2.8.4`, there may be some strange behaviour on some of the tabs. For example `/#/exchanges` doesn't work correctly with `2.7.0` backends.
 
-If you are running an older version of RabbitMQ than this, there may be some strange behaviour on some of the tabs. For example `/#/exchanges` doesn't work correctly with `2.7.0` backends.
+A final note: Vanguard is still under development, with the intention of ironing out a few bugs in any of the readonly actions. Write actions (such as publishing messages, deleting bindings, etc.) will not be supported.
 
-> Vanguard is still under development, with the intention of ironing out a few bugs
-in any of the readonly actions. Write actions (such as publishing messages, deleting bindings, etc.) will not be supported.
 
 <a name="run" />
 
-Run
----
+Running
+-------
 
-Vanguard is deployed internally at [SoundCloud](http://soundcloud.com) following something like the [12factor](http://www.12factor.net/) approach - this means all configuration is set through `ENV` variables:
+Vanguard is deployed internally at [SoundCloud](http://soundcloud.com) following something along the lines of a [12factor](http://www.12factor.net/) approach - this means all configuration is set through `ENV` variables:
 
 ```shell
 PORT=8080
@@ -61,20 +58,20 @@ To play around with Vanguard locally you will need two seperate terminals open. 
 make dev
 ```
 
-Which will start two backend RabbitMQ instances. (You can configure which `AMQP` port range is used by looking in `./dev/run`). In the second terminal:
+Which starts two backend RabbitMQ instances. (You can configure which `AMQP` port range is used by looking in `./dev/run`). Then, in the second terminal:
 
 ```shell
 make build
 foreman start
 ```
 
-Which will use the `.env` file in the root directory, and start Vanguard connecting to the two previously started RabbitMQ APIs. Then point your browser at [localhost:8080](http://localhost:8080).
+Which will use the `.env` file in the root directory, and start Vanguard connecting to the two previously started RabbitMQ APIs. Point your browser at [localhost:8080](http://localhost:8080) to see it in action.
 
 
 <a name="test" />
 
-Test
-----
+Testing
+-------
 
 Run all the tests:
 
