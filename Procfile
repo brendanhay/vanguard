@@ -1,1 +1,1 @@
-web: ./rel/package/bin/vanguard noshell
+web: ./rel/package/bin/vanguard noconsole

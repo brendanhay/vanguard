@@ -56,8 +56,8 @@ ERL=exec erl -pa ebin $(DEPS) -sname vanguard -hidden -connect_all false
 console: compile
 	rel/package/bin/vanguard console
 
-noshell: compile
-	rel/package/bin/vanguard noshell
+noconsole: compile
+	rel/package/bin/vanguard noconsole
 
 boot: compile
 	$(ERL) -s vanguard
