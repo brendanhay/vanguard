@@ -22,6 +22,8 @@ compile:
 	$(REBAR) compile
 	$(MAKE) xref
 
+# Target named as such because of build tool compatibility
+# (usually I would use 'package' here)
 build: all
 	rm -rf rel/package
 	$(REBAR) generate -f
@@ -40,7 +42,7 @@ integration:
 	$(REBAR) skip_deps=true compile
 	$(REBAR) ct skip_deps=true suites=$(T)
 
-test: build unit integration
+test: compile unit integration
 
 #
 # Run
@@ -51,10 +53,10 @@ ERL=exec erl -pa ebin $(DEPS) -sname vanguard -hidden -connect_all false
 
 .PHONY: boot noboot
 
-console: build
+console: compile
 	rel/package/bin/vanguard console
 
-noshell: build
+noshell: compile
 	rel/package/bin/vanguard noshell
 
 boot: compile
@@ -79,11 +81,11 @@ APPS=kernel stdlib sasl erts ssl observer \
   inets xmerl webtool snmp public_key \
   mnesia eunit syntax_tools compiler hipe
 
-build-plt: all
-	dialyzer --build_plt --output_plt $(PLT) \
+compile-plt: all
+	dialyzer --compile_plt --output_plt $(PLT) \
 	  --apps $(APPS) $(DEPS)
 
-dialyzer: build
+dialyzer: compile
 	dialyzer ebin --plt $(PLT) $(WARNINGS) \
 	  | grep -v 'lager_not_running'
 

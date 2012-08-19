@@ -32,7 +32,7 @@ object_keys_are_merged_test() ->
                  end)).
 
 lists_are_concatenated_and_uniq_test() ->
-    ?EQC(?FORALL({L, R}, {list(value()), list(value())},
+    ?EQC(?FORALL({L, R}, {values(), values()},
                  begin
                      lists:usort(L ++ R) =:= merge(L, R)
                  end)).
@@ -47,6 +47,8 @@ key() -> non_empty(binary()).
 
 all_keys({[]})    -> [];
 all_keys({Props}) -> lists:sort(proplists:get_keys(Props)).
+
+values() -> non_empty(list(value())).
 
 value() ->
     union([null,

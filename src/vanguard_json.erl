@@ -40,7 +40,7 @@
 %% Numbers
 merge(L, R) when is_number(L), is_number(R) -> L + R;
 
-%% Rabbit empty objects
+%% Rabbit's representation of empty objects, + usual arrays
 merge([], R) -> R;
 merge(L, []) -> L;
 
