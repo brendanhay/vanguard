@@ -50,7 +50,7 @@ BACKENDS=http://guest:guest@localhost:55670,http://guest:guest@localhost:55680
 string of URIs containing auth, host, and port information for the backend
 RabbitMQ HTTP API instances. These will all need to be exported under the user running Vanguard.
 
-> I strongly suggest using RabbitMQ users which have readonly permissions and the `monitoring` tag set in the `BACKENDS` URIs.
+> I strongly suggest only using RabbitMQ users which have readonly permissions and the `monitoring` tag set, as the auth information in the `BACKENDS` URIs.
 
 To play around with Vanguard locally you will need two seperate terminals open. In the first terminal:
 
