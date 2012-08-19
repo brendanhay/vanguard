@@ -19,19 +19,19 @@ Table of Contents
 Introduction
 ------------
 
-At [SoundCloud](http://soundcloud.com) we have a number of disparate RabbitMQ instances which are all loosely related and interconnected via federation links or shovel configurations.
+At [SoundCloud](http://soundcloud.com) we run a number of disparate RabbitMQ instances which are all loosely related and interconnected via federation links or shovel configurations.
 
-While the default RabbitMQ Management UI works great for cluster overviews, it's a chore in an unclustered topology to have check many instances of the Management UI to get a feel for node health and thoroughput.
+While the default RabbitMQ Management UI works great for cluster overviews, it's a chore in an unclustered topology to check many instances of the Management UI for node health and thoroughput.
 
-Vanguard is an attempt at keeping the UI useful and accessible in the above scenario by providing a very lightweight proxy server which runs the Management UI, calls out to seperate backend API instances, aggregates/munges/unions the result, and presents it back to the user in the standard UI.
+Vanguard is an attempt at keeping the UI useful and accessible in the above scenario by serving a copy of the Management UI which proxies requests to seperate backend API instances, aggregates/munges/unions the result, and presents it back to the user.
 
-The following screenshot shows Vanguard serving the Management UI for two seperate RabbitMQ backends which are not clustered:
+The following screenshot shows Vanguard configured for two seperate RabbitMQ backends which are not clustered:
 
 ![Vanguard](https://raw.github.com/brendanhay/vanguard/master/img/vanguard.png)
 
-Vanguard ships with a copy of the static assets from the `2.8.4` version of the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin so if you have an older version of RabbitMQ than `2.8.4`, there may be some strange behaviour on some of the tabs. For example `/#/exchanges` doesn't work correctly with `2.7.0` backends.
+Vanguard ships with a copy of the static assets from the `2.8.4` version of the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin - so if you have an older version of RabbitMQ than `2.8.4`, there may be unintended behaviour on some of the tabs, ie. `/#/exchanges` don't work correctly with `2.7.0` backends.
 
-A final note: Vanguard is still under development, with the intention of ironing out a few bugs in any of the readonly actions. Write actions such as publishing messages, deleting bindings, and so on will not be supported.
+> Vanguard is still under development, with the intention of ironing out a few bugs in any of the readonly actions. Write actions such as publishing messages, deleting bindings, and so on will not be supported.
 
 
 <a name="run" />
