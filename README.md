@@ -31,7 +31,7 @@ The following screenshot shows Vanguard serving the Management UI for two sepera
 
 Vanguard ships with a copy of the static assets from the `2.8.4` version of the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin so if you have an older version of RabbitMQ than `2.8.4`, there may be some strange behaviour on some of the tabs. For example `/#/exchanges` doesn't work correctly with `2.7.0` backends.
 
-A final note: Vanguard is still under development, with the intention of ironing out a few bugs in any of the readonly actions. Write actions (such as publishing messages, deleting bindings, etc.) will not be supported.
+A final note: Vanguard is still under development, with the intention of ironing out a few bugs in any of the readonly actions. Write actions such as publishing messages, deleting bindings, and so on will not be supported.
 
 
 <a name="run" />
