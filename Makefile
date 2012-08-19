@@ -51,7 +51,7 @@ test: compile unit integration
 DEPS=deps/*/ebin
 ERL=exec erl -pa ebin $(DEPS) -sname vanguard -hidden -connect_all false
 
-.PHONY: boot noboot
+.PHONY: dev
 
 console: compile
 	rel/package/bin/vanguard console
@@ -64,6 +64,9 @@ boot: compile
 
 noboot: compile
 	$(ERL)
+
+dev:
+	./dev/run
 
 #
 # Analysis
