@@ -29,7 +29,7 @@ The following screenshot shows Vanguard configured for two seperate RabbitMQ bac
 
 ![Vanguard](https://raw.github.com/brendanhay/vanguard/master/img/vanguard.png)
 
-Vanguard ships with a copy of the static assets from the `2.8.4` version of the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin - so if you have an older version of RabbitMQ than `2.8.4`, there may be unintended behaviour on some of the tabs, ie. `/#/exchanges` don't work correctly with `2.7.0` backends.
+Vanguard ships with a copy of the static assets from the `2.8.4` version of the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin - so if you run an older version of RabbitMQ than `2.8.4`, there may be unintended behaviour on some of the tabs, ie. `/#/exchanges` don't work correctly with `2.7.0` backends.
 
 > Vanguard is still under development, with the intention of ironing out a few bugs in any of the readonly actions. Write actions such as publishing messages, deleting bindings, and so on will not be supported.
 
