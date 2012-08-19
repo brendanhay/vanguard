@@ -3,14 +3,13 @@ Vanguard
 
 [![Build Status](https://secure.travis-ci.org/brendanhay/vanguard.png)](http://travis-ci.org/brendanhay/vanguard)
 
+
 Table of Contents
 -----------------
 
 * [Introduction](#introduction)
-* [Features](#features)
-* [Build](#build)
-* [Testing](#testing)
-* [Configure](#configure)
+* [Run](#run)
+* [Testing](#test)
 * [Contribute](#contribute)
 * [Licence](#licence)
 
@@ -20,59 +19,66 @@ Table of Contents
 Introduction
 ------------
 
-> TODO
-
-It is currently in a prototype stage.
+![Vanguard](github.com/brendanhay/vanguard/screenshots/vanguard.png)
 
 
-<a name="features" />
+<a name="run" />
 
-Features
---------
+Run
+---
 
-> TODO
+Vanguard is deployed internally at [SoundCloud](http://soundcloud.com) following something like the [12factor](http://www.12factor.net/) approach.
 
-
-<a name="build" />
-
-Build
------
+This means all configuration is set through `ENV` variables:
 
 ```shell
-make
+PORT=8080
+BACKENDS=http://guest:guest@localhost:55670,http://guest:guest@localhost:55680
 ```
 
+`PORT` is the HTTP listener's port, and `BACKENDS` is a comma seperated
+string of URIs containing auth, host, and port information for the backend
+RabbitMQ HTTP API instances.
 
-<a name="testing" />
+These will all need to be exported for the user running Vanguard.
 
-Testing
--------
+To play around with Vanguard locally, you will need two terminals open.
 
-> TODO
+In the first terminal:
 
 ```shell
-make test        # All
-make unit        # Unit + Property tests only
-make integration # Integration suites
+make dev
 ```
 
-Both `unit` and `integration` targets support an `ENV` variable `T` specifying a specific suite to run. For example:
+Which will start two backend RabbitMQ instances. (You can configure which `AMQP` port range is used by looking in `./dev/run`)
+
+In the second terminal:
 
 ```shell
-make unit T=vanguard_util            # The eunit module, minus the '_test.erl' suffix
-make integration T=vanguard_listener # A common_test suite, minus the '_SUITE.erl' suffix
+foreman start
 ```
 
-There is also a sub-directory `./dev` which contains a set of [foreman](github.com/ddollar/foreman) related configuration to start the two backend nodes
-referenced in the default configuration.
+Which will use the `.env` file in the root directory, and start Vanguard connecting to the two previously started RabbitMQ APIs.
+
+Then point your browser at: http://localhost:8080
 
 
-<a name="configure" />
+<a name="test" />
 
-Configure
----------
+Test
+----
 
-> TODO
+Run all the tests:
+
+```shell
+make test
+```
+
+The `unit` target supports an `ENV` variable `T` specifying a specific suite to run. For example:
+
+```shell
+make unit T=vanguard_json # Name of the eunit module, minus the '_test.erl' suffix
+```
 
 
 <a name="contribute" />
