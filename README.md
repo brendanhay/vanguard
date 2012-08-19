@@ -100,3 +100,5 @@ Licence
 -------
 
 Vanguard is released under the [Mozilla Public License Version 2.0](http://www.mozilla.org/MPL/)
+
+Please look in the `./priv/www` directory for copies of the related [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) licenses.
