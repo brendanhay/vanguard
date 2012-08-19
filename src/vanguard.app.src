@@ -7,6 +7,7 @@
         stdlib,
         lager,
         cowboy,
+        mimetypes,
         ibrowse
     ]},
     {mod, {vanguard, []}},

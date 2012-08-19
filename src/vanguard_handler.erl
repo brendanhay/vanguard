@@ -35,6 +35,9 @@ info({ok, ProxyId, Status, Body}, Req, ProxyId) ->
     lager:info("REPLY ~p ~p", [ProxyId, self()]),
     {ok, NewReq} = cowboy_http_req:reply(Status, [], Body, Req),
     {ok, NewReq, ProxyId};
+info({timeout, ProxyId}, Req, ProxyId) ->
+    {ok, NewReq} = cowboy_http_req:reply(204, [], <<>>, Req),
+    {ok, NewReq, ProxyId};
 info(Msg, Req, ProxyId) ->
     lager:error("UNHANDLED ~p ~p ~p", [Msg, ProxyId, self()]),
     {loop, Req, ProxyId}.

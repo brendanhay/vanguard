@@ -109,6 +109,7 @@ store(Id, Value, Replies) -> lists:keystore(Id, ?KEY, Replies, Value).
 
 -spec aggr(replies()) -> {pos_integer(), [_]}.
 %% @private
+aggr([])      -> {204, []};
 aggr(Replies) -> aggr(Replies, {[], []}).
 
 -spec aggr(replies(), {[_], [_]}) -> {pos_integer(), [_]}.

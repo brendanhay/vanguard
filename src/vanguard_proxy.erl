@@ -173,16 +173,22 @@ multi_request(Backends, Req) ->
 multi_request([], _Req, Replies) ->
     {ok, Replies};
 multi_request([H | T], Req, Replies) ->
-    Id = request(H, Req),
-    multi_request(T, Req, vanguard_replies:insert(Id, Replies)).
+    NewReplies =
+        case request(H, Req) of
+            {ibrowse_req_id, Id} ->
+                vanguard_replies:insert(Id, Replies);
+            Error ->
+                lager:error("REQ ~s ~p", [H, Error]),
+                Replies
+        end,
+    multi_request(T, Req, NewReplies).
 
--spec request(backend(), #http_req{}) -> ibrowse_id().
+-spec request(backend(), #http_req{}) -> any().
 %% @private
 request(Backend, Req) ->
     Uri = uri(Backend, Req),
     lager:info("~s ~s ~p", [Req#http_req.method, Uri, self()]),
-    {ibrowse_req_id, Id} = ibrowse:send_req(Uri, [], method(Req), [], [{stream_to, self()}]),
-    Id.
+    ibrowse:send_req(Uri, [], method(Req), [], [{stream_to, self()}]).
 
 -spec uri(backend(), #http_req{}) -> string().
 %% @private
