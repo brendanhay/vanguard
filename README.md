@@ -19,7 +19,18 @@ Table of Contents
 Introduction
 ------------
 
+At [SoundCloud](http://soundcloud.com) we have a number of disparate RabbitMQ instances which are all loosely related and interconnected via federation links or shovels. So, while the default RabbitMQ Management UI works great for cluster overviews, it's definitely a chore in an unclustered topology to have check many instances of the Management UI to get a feel for node health and thoroughput.
+
+Vanguard is an attempt at making it a bit more sane, by providing a very lightweight proxy server which runs the Management UI, calls out to the seperate
+backend API instances, and aggregates/munges/unions the results.
+
+In the following screenshot `app062` and `app064` are two seperate RabbitMQ instances which are not clustered in any way:
+
 ![Vanguard](https://raw.github.com/brendanhay/vanguard/master/img/vanguard.png)
+
+> Vanguard ships with a copy of the static assets from the [rabbitmq-management](https://github.com/rabbitmq/rabbitmq-management) plugin, which at the time of writing is at version `2.8.4`.
+
+> If you are running an older version of RabbitMQ than this, there may be some strange behaviour on some of the tabs. For example `/#/exchanges` doesn't work correctly with `2.7.0` backends.
 
 
 <a name="run" />
