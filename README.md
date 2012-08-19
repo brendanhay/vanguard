@@ -8,7 +8,7 @@ Table of Contents
 -----------------
 
 * [Introduction](#introduction)
-* [Run](#run)
+* [Running](#run)
 * [Testing](#test)
 * [Contribute](#contribute)
 * [Licence](#licence)
