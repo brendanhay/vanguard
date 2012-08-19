@@ -41,7 +41,7 @@ Running
 
 Vanguard is deployed following something along the lines of a [12factor](http://www.12factor.net/) approach - this means all configuration is set through `ENV` variables:
 
-```shell
+```
 PORT=8080
 BACKENDS=http://guest:guest@localhost:55670,http://guest:guest@localhost:55680
 ```
