@@ -64,6 +64,7 @@ make dev
 Which will start two backend RabbitMQ instances. (You can configure which `AMQP` port range is used by looking in `./dev/run`). In the second terminal:
 
 ```shell
+make build
 foreman start
 ```
 
