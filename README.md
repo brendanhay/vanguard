@@ -39,7 +39,7 @@ Vanguard ships with a copy of the static assets from the `2.8.4` version of the 
 Running
 -------
 
-Vanguard is deployed internally at [SoundCloud](http://soundcloud.com) following something along the lines of a [12factor](http://www.12factor.net/) approach - this means all configuration is set through `ENV` variables:
+Vanguard is deployed following something along the lines of a [12factor](http://www.12factor.net/) approach - this means all configuration is set through `ENV` variables:
 
 ```shell
 PORT=8080
