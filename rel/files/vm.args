@@ -1,5 +1,5 @@
 ## Name of the node
--sname vanguard
+-sname vanguard_web
 
 ## Enable kernel poll and a few async threads
 +K true
