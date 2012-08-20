@@ -203,3 +203,5 @@ uri(Backend, #http_req{raw_path = Path, raw_qs = Query}) ->
 %% @private
 method(#http_req{method = Method}) ->
     list_to_atom(string:to_lower(atom_to_list(Method))).
+
+
