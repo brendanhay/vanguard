@@ -132,7 +132,6 @@ function render(reqs, template, highlight) {
 function update() {
     clearInterval(timer);
     with_update(function(html) {
-            update_navigation();
             replace_content('main', html);
             postprocess();
             postprocess_partial();
@@ -163,85 +162,6 @@ function partial_update() {
             postprocess_partial();
         });
     }
-}
-
-function update_navigation() {
-    var l1 = '';
-    var l2 = '';
-    var descend = null;
-
-    for (var k in NAVIGATION) {
-        var val = NAVIGATION[k];
-        var path = val;
-        while (!leaf(path)) {
-            path = path[keys(path)[0]];
-        }
-        var selected = false;
-        if (contains_current_highlight(val)) {
-            selected = true;
-            if (!leaf(val)) {
-                descend = nav(val);
-            }
-        }
-        if (show(path)) {
-            l1 += '<li><a href="' + nav(path) + '"' +
-                (selected ? ' class="selected"' : '') + '>' + k + '</a></li>';
-        }
-    }
-
-    if (descend) {
-        l2 = obj_to_ul(descend);
-        $('#main').addClass('with-rhs');
-    }
-    else {
-        $('#main').removeClass('with-rhs');
-    }
-
-    replace_content('tabs', l1);
-    replace_content('rhs', l2);
-}
-
-function nav(pair) {
-    return pair[0];
-}
-
-function show(pair) {
-    return !pair[1] || user_administrator;
-}
-
-function leaf(pair) {
-    return typeof(nav(pair)) == 'string';
-}
-
-function contains_current_highlight(val) {
-    if (leaf(val)) {
-        return current_highlight == nav(val);
-    }
-    else {
-        var b = false;
-        for (var k in val) {
-            b |= contains_current_highlight(val[k]);
-        }
-        return b;
-    }
-}
-
-function obj_to_ul(val) {
-    var res = '<ul>';
-    for (var k in val) {
-        res += '<li>';
-        var obj = val[k];
-        if (leaf(obj) && show(obj)) {
-            res += '<a href="' + nav(obj) + '"' +
-                (current_highlight == nav(obj) ? ' class="selected"' : '') +
-                '>' + k + '</a>';
-        }
-        else {
-            res += obj_to_ul(nav(obj));
-        }
-        res += '</li>';
-    }
-    return res + '</ul>';
 }
 
 function full_refresh() {
@@ -321,6 +241,8 @@ function show_popup(type, text) {
 }
 
 function postprocess() {
+    $('a').removeClass('selected');
+    $('a[href="' + current_highlight + '"]').addClass('selected');
     $('form.confirm').submit(function() {
             return confirm("Are you sure? This object cannot be recovered " +
                            "after deletion.");
@@ -409,23 +331,12 @@ function update_multifields() {
                     }
                 });
             if (!empty_found) {
-                var prefix = name + '_' + (largest_id + 1);
-                var type_part;
-                if ($(this).hasClass('string-only')) {
-                    type_part = '<input type="hidden" name="' + prefix +
-                        '_mftype" value="string"/>';
-                } else {
-                    type_part = '<select name="' + prefix +
-                        '_mftype">' +
-                        '<option value="string">String</option>' +
-                        '<option value="number">Number</option>' +
-                        '<option value="boolean">Boolean</option>' +
-                        '</select>';
-                }
-                $(this).append('<p><input type="text" name="' + prefix +
+                $(this).append('<p><input type="text" name="' + name + '_' +
+                               (largest_id + 1) +
                                '_mfkey" value=""/> = ' +
-                               '<input type="text" name="' + prefix +
-                               '_mfvalue" value=""/> ' + type_part + '</p>');
+                               '<input type="text" name="' + name + '_' +
+                               (largest_id + 1) +
+                               '_mfvalue" value=""/></p>');
             }
         });
 }
@@ -687,8 +598,7 @@ function collapse_multifields(params0) {
     for (key in params0) {
         var match = key.match(/([a-z]*)_([0-9]*)_mfkey/);
         var match2 = key.match(/[a-z]*_[0-9]*_mfvalue/);
-        var match3 = key.match(/[a-z]*_[0-9]*_mftype/);
-        if (match == null && match2 == null && match3 == null) {
+        if (match == null && match2 == null) {
             params[key] = params0[key];
         }
         else if (match == null) {
@@ -703,21 +613,7 @@ function collapse_multifields(params0) {
             if (params0[key] != "") {
                 var k = params0[key];
                 var v = params0[name + '_' + id + '_mfvalue'];
-                var t = params0[name + '_' + id + '_mftype'];
-                if (t == 'boolean') {
-                    if (v != 'true' && v != 'false')
-                        throw(k + ' must be "true" or "false"; got ' + v);
-                    params[name][k] = (v == 'true');
-                }
-                else if (t == 'number') {
-                    var n = parseFloat(v);
-                    if (isNaN(n))
-                        throw(k + ' must be a number; got ' + v);
-                    params[name][k] = n;
-                }
-                else {
-                    params[name][k] = v;
-                }
+                params[name][k] = v;
             }
         }
     }
@@ -769,26 +665,6 @@ function maybe_remove_fields(params) {
     });
     return params;
 }
-
-function put_parameter(sammy, mandatory_keys, num_keys) {
-    for (var i in sammy.params) {
-        if (i === 'length' || !sammy.params.hasOwnProperty(i)) continue;
-        if (sammy.params[i] == '' && mandatory_keys.indexOf(i) == -1) {
-            delete sammy.params[i];
-        }
-        else if (num_keys.indexOf(i) != -1) {
-            sammy.params[i] = parseInt(sammy.params[i]);
-        }
-    }
-    var params = {"component": sammy.params.component,
-                  "key":       sammy.params.key,
-                  "value":     params_magic(sammy.params)};
-    delete params.value.component;
-    delete params.value.key;
-    sammy.params = params;
-    if (sync_put(sammy, '/parameters/:component/:key')) update();
-}
-
 
 function debug(str) {
     $('<p>' + str + '</p>').appendTo('#debug');
