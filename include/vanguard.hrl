@@ -15,24 +15,12 @@
 %% Logging
 -compile({parse_transform, lager_transform}).
 
-%% Currying
--compile({parse_transform, cut}).
-
-%% Monads
--compile({parse_transform, do}).
-
 %%
 %% Types
 %%
 
 -type options()  :: [proplists:property()].
 -type backend()  :: [string()].
-
-%%
-%% Monads
-%%
-
--type error_m(Result, Error) :: ok | {ok, Result} | {error, Error}.
 
 %%
 %% Macros
