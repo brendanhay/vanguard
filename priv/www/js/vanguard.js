@@ -23,12 +23,13 @@ var vanguard = {
     selectElement: function(id, values) {
         values.push('All');
 
-        cookie = vanguard.getTopology();
+        cookie = vanguard.getTopology() || 'All';
+
         options = values.map(function(val, i) {
             return '<option' +
                 (val == cookie ? ' selected="selected"' : '') +
                 ' value="' + val + '">' + val + '</option>'
-        }).join('');
+        }).reverse().join('');
 
         return '<p><label for="' + id +
             '">Topology: </label><select id="' + id + '">' +
