@@ -1,6 +1,6 @@
 ## Enable kernel poll and a few async threads
 +K true
-+A 60
++A 12
 
 ## Increase number of concurrent ports/sockets
 -env ERL_MAX_PORTS 8192
@@ -9,6 +9,5 @@
 -env ERL_FULLSWEEP_AFTER 0
 
 ## Ensure hidden node and transitive connections
-## so it doesn't fuck with backend rabbits!
 -hidden
 -connect_all false
