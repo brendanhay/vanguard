@@ -6,25 +6,11 @@
         kernel,
         stdlib,
         lager,
+        ranch,
         cowboy,
         mimetypes,
         ibrowse
     ]},
     {mod, {vanguard, []}},
-    {env, [
-        %% If an atom is specified for a configuration value,
-        %% an os environment variable will be looked up.
-        %% See: vanguard_config.erl
-
-        %% Integer: HTTP listener port
-        {port, 'PORT'},
-
-        %% Integer: Size of cowboy acceptor pool
-        {acceptors, 50},
-
-        %% Comma Seperated: Backend groups
-        %% Example: a=value,b=value,c=value,c=value,b=value
-        {backends, 'BACKENDS'}
-
-    ]}
+    {env, []}
 ]}.

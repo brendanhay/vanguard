@@ -33,9 +33,7 @@ listener() ->
     Acceptors = vanguard_config:acceptors(),
     Tcp       = [{ip, vanguard_config:ip()}, {port, vanguard_config:port()}],
     Dispatch  = [{dispatch, routes()}],
-    case cowboy:start_listener(http_listener, Acceptors,
-                               cowboy_tcp_transport, Tcp,
-                               cowboy_http_protocol, Dispatch) of
+    case cowboy:start_http(http_listener, Acceptors, Tcp, Dispatch) of
         {ok, Pid} ->
             lager:info("LISTEN ~s", [vanguard_net:format_ip(Tcp)]),
             link(Pid),
@@ -59,6 +57,9 @@ routes() ->
         %% /api/* requests
         {[<<"api">>, '...'], vanguard_handler, Backends},
 
+        %% /priv/* requests
+        {[<<"vanguard">>, '...'], vanguard_priv_handler, Backends},
+
         %% Static files under ./priv/www
         static(['...'])
     ]}].
@@ -70,7 +71,7 @@ static(Match) -> static(Match, []).
 -spec static([binary() | atom()], options()) -> {}.
 %% @private
 static(Match, Opts) ->
-    {Match, cowboy_http_static,
+    {Match, cowboy_static,
         [{directory, {priv_dir, vanguard, [<<"www">>]}},
          {mimetypes, {fun mimetypes:path_to_mimes/2, default}},
          {etag, {attributes, [filepath, filesize, inode, mtime]}}|

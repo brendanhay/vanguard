@@ -12,7 +12,6 @@
 
 -behaviour(gen_fsm).
 
--include_lib("cowboy/include/http.hrl").
 -include("include/vanguard.hrl").
 
 %% API
@@ -48,7 +47,7 @@
 -record(s, {proxy_id :: reference(),
             from     :: pid(),
             backends :: [backend()],
-            req      :: #http_req{},
+            req      :: tuple(),
             replies  :: vanguard_replies:replies()}).
 
 -type ibrowse_id()       :: {non_neg_integer(), non_neg_integer(), non_neg_integer()}.
@@ -60,7 +59,7 @@
 %% API
 %%
 
--spec start_link(reference(), pid(), [backend()], #http_req{})
+-spec start_link(reference(), pid(), [backend()], _req)
     -> {ok, pid()} | ignore | {error, _}.
 %% @doc
 start_link(ProxyId, From, Backends, Req) ->
@@ -69,7 +68,7 @@ start_link(ProxyId, From, Backends, Req) ->
                                    backends = Backends,
                                    req      = Req}, []).
 
--spec forward([backend()], #http_req{}) -> {ok, reference()}.
+-spec forward([backend()], _req) -> {ok, reference()}.
 %% @doc
 forward(Backends, Req) ->
     ProxyId = make_ref(),
@@ -162,12 +161,12 @@ update_replies(F, State = #s{replies = Replies}) -> State#s{replies = F(Replies)
 %% @private
 schedule_timeout() -> erlang:send_after(?TIMEOUT, self(), ?TIMEOUT_MSG).
 
--spec multi_request([string()], #http_req{}) -> {ok, vanguard_replies:replies()}.
+-spec multi_request([string()], _req) -> {ok, vanguard_replies:replies()}.
 %% @private
 multi_request(Backends, Req) ->
     multi_request(Backends, Req, vanguard_replies:empty()).
 
--spec multi_request([backend()], #http_req{}, vanguard_replies:replies())
+-spec multi_request([backend()], _req, vanguard_replies:replies())
     -> {ok, vanguard_replies:replies()}.
 %% @private
 multi_request([], _Req, Replies) ->
@@ -183,23 +182,27 @@ multi_request([H | T], Req, Replies) ->
         end,
     multi_request(T, Req, NewReplies).
 
--spec request(backend(), #http_req{}) -> any().
+-spec request(backend(), _req) -> any().
 %% @private
 request(Backend, Req) ->
     Uri = uri(Backend, Req),
-    lager:info("~s ~s ~p", [Req#http_req.method, Uri, self()]),
+    {Method, _Req} = cowboy_req:method(Req),
+    lager:info("~s ~s ~p", [Method, Uri, self()]),
     ibrowse:send_req(Uri, [], method(Req), [], [{stream_to, self()}]).
 
--spec uri(backend(), #http_req{}) -> string().
+-spec uri(backend(), _req) -> string().
 %% @private
-uri(Backend, #http_req{raw_path = Path, raw_qs = Query}) ->
+uri(Backend, Req) ->
+    {Path, _Req} = cowboy_req:path(Req),
+    {Query, _Req} = cowboy_req:qs(Req),
     Base = string:join([Backend, tl(binary_to_list(Path))], "/"),
     case Query of
         <<>>  -> Base;
         _Else -> string:join([Base, binary_to_list(Query)], "?")
     end.
 
--spec method(#http_req{}) -> get | post.
+-spec method(_req) -> get | post.
 %% @private
-method(#http_req{method = Method}) ->
-    list_to_atom(string:to_lower(atom_to_list(Method))).
+method(Req) ->
+    {Method, _Req} = cowboy_req:method(Req),
+    list_to_atom(string:to_lower(binary_to_list(Method))).

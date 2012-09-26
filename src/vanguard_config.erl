@@ -29,11 +29,11 @@ ip() -> {0, 0, 0, 0}.
 
 -spec port() -> inet:port_number().
 %% @doc
-port() -> list_to_integer(env(port)).
+port() -> list_to_integer(os("PORT")).
 
 -spec acceptors() -> pos_integer().
 %% @doc
-acceptors() -> list_to_integer(env(acceptors)).
+acceptors() -> list_to_integer(os("ACCEPTORS")).
 
 -spec backends() -> [backend()].
 %% @doc
@@ -50,16 +50,6 @@ option(Key, Opts) ->
 %%
 %% Private
 %%
-
--spec env(atom()) -> any().
-%% @doc
-env(Key) ->
-    application:load(myxi),
-    case application:get_env(myxi, Key) of
-        {ok, Value} when is_atom(Value) -> os(atom_to_list(Value));
-        {ok, Value}                     -> Value;
-        undefined                       -> error({config_not_set, Key})
-    end.
 
 -spec os(string()) -> string().
 %% @doc

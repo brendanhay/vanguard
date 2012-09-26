@@ -39,6 +39,7 @@
 %%
 
 -define(TIMEOUT, 2000).
+-define(COOKIE, <<"topology">>).
 
 %%
 %% Tests
