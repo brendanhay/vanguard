@@ -25,19 +25,19 @@
 
 -spec ip() -> inet:ip_address().
 %% @doc
-ip() -> {0,0,0,0}.
+ip() -> {0, 0, 0, 0}.
 
 -spec port() -> inet:port_number().
 %% @doc
-port() -> list_to_integer(os("PORT")).
+port() -> list_to_integer(env(port)).
 
 -spec acceptors() -> pos_integer().
 %% @doc
-acceptors() -> 50.
+acceptors() -> list_to_integer(env(acceptors)).
 
 -spec backends() -> [backend()].
 %% @doc
-backends() -> string:tokens(os("BACKENDS"), ",").
+backends() -> parse_backends(string:tokens(os("BACKENDS"), ","), []).
 
 -spec option(ip | atom(), options()) ->  inet:ip_address() | any().
 %% @doc
@@ -50,6 +50,16 @@ option(Key, Opts) ->
 %%
 %% Private
 %%
+
+-spec env(atom()) -> any().
+%% @doc
+env(Key) ->
+    application:load(myxi),
+    case application:get_env(myxi, Key) of
+        {ok, Value} when is_atom(Value) -> os(atom_to_list(Value));
+        {ok, Value}                     -> Value;
+        undefined                       -> error({config_not_set, Key})
+    end.
 
 -spec os(string()) -> string().
 %% @doc
@@ -64,3 +74,15 @@ os(Key) ->
 lookup_option(Key, Opts) ->
     {Key, Value} = lists:keyfind(Key, 1, Opts),
     Value.
+
+-spec parse_backends([string()], [backend()]) -> [backend()].
+%% @private
+parse_backends([], Acc) ->
+    Acc;
+parse_backends([Pair|T], Acc) ->
+    [K, V] = string:tokens(Pair, "="),
+    All = case lists:keyfind(K, 1, Acc) of
+              false     -> [];
+              {K, List} -> List
+          end,
+    parse_backends(T, lists:keystore(K, 1, Acc, {K, [V|All]})).
