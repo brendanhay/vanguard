@@ -14,7 +14,9 @@ function map(list) {
 }
 
 // Which queries need to have the current vhost appended (if there is one)?
-var VHOST_QUERIES = map(['/queues', '/exchanges']);
+var VHOST_QUERIES = [new RegExp('/queues'),
+                     new RegExp('/exchanges'),
+                     new RegExp('/parameters/[^/]*')];
 
 // Which queries need to have the current sort appended (if there is one)?
 var SORT_QUERIES  = map(['/connections', '/channels', '/vhosts', '/users',
@@ -24,7 +26,6 @@ var SORT_QUERIES  = map(['/connections', '/channels', '/vhosts', '/users',
 var KNOWN_ARGS = {'alternate-exchange':        {'short': 'AE',  'type': 'string'},
                   'x-message-ttl':             {'short': 'TTL', 'type': 'int'},
                   'x-expires':                 {'short': 'Exp', 'type': 'int'},
-                  'x-ha-policy':               {'short': 'HA',  'type': 'string'},
                   'x-dead-letter-exchange':    {'short': 'DLX', 'type': 'string'},
                   'x-dead-letter-routing-key': {'short': 'DLK', 'type': 'string'}};
 
@@ -38,6 +39,15 @@ var ALL_ARGS = {};
 for (var k in KNOWN_ARGS)    ALL_ARGS[k] = KNOWN_ARGS[k];
 for (var k in IMPLICIT_ARGS) ALL_ARGS[k] = IMPLICIT_ARGS[k];
 
+var NAVIGATION = {'Overview':    ['#/',                            false],
+                  'Connections': ['#/connections',                 false],
+                  'Channels':    ['#/channels',                    false],
+                  'Exchanges':   ['#/exchanges',                   false],
+                  'Queues':      ['#/queues',                      false],
+                  'Admin':       [{'Users':         ['#/users',    true],
+                                   'Virtual Hosts': ['#/vhosts',   true],
+                                   'Policies':      ['#/policies', true]}, true]
+                 };
 
 ///////////////////////////////////////////////////////////////////////////
 //                                                                       //
@@ -61,14 +71,17 @@ var extension_count;
 // The dispatcher needs access to the Sammy app
 var app;
 
+// Used for the new exchange form, and to display broken exchange types
 var exchange_types;
 
 // Set up the above vars
-function setup_global_vars() {
+function setup_global_vars(user) {
     var overview = JSON.parse(sync_get('/overview'));
     statistics_level = overview.statistics_level;
-    var user = JSON.parse(sync_get('/whoami'));
-    replace_content('login', '<p>User: <b>' + user.name + '</b></p>');
+    replace_content('login-details',
+                    '<p>User: <b>' + user.name + '</b></p>' +
+                    '<p>RabbitMQ ' + overview.rabbitmq_version +
+                    ', Erlang ' + overview.erlang_version + '</p>');
     var tags = user.tags.split(",");
     user_administrator = jQuery.inArray("administrator", tags) != -1;
     user_monitor = user_administrator ||

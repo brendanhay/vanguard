@@ -6,8 +6,9 @@ SOCKETS_THRESHOLDS=[[1.0, 'red'],
 PROCESS_THRESHOLDS=[[0.75, 'red'],
                     [0.5, 'yellow']];
 
-function fmt_string(str) {
-    if (str == undefined) return UNKNOWN_REPR;
+function fmt_string(str, unknown) {
+    if (unknown == undefined) unkown = UNKNOWN_REPR;
+    if (str == undefined) return unknown;
     return fmt_escape_html("" + str);
 }
 
@@ -26,6 +27,11 @@ function fmt_bytes(bytes) {
     return (power == 0 ? num.toFixed(0) : num.toFixed(1)) + powers[power];
 }
 
+function fmt_memory(memory, key) {
+    return '<div class="memory-key memory_' + key + '"></div>' +
+        fmt_bytes(memory[key]);
+}
+
 function fmt_boolean(b) {
     if (b == undefined) return UNKNOWN_REPR;
 
@@ -40,6 +46,15 @@ function fmt_date(d) {
     return d.getFullYear() + "-" + f(d.getMonth() + 1) + "-" +
         f(d.getDate()) + " " + f(d.getHours()) + ":" + f(d.getMinutes()) +
         ":" + f(d.getSeconds());
+}
+
+function fmt_time(t, suffix) {
+    if (t == undefined || t == 0) return '';
+    return t + suffix;
+}
+
+function fmt_millis(millis) {
+    return Math.round(millis / 1000) + "s";
 }
 
 function fmt_parameters(obj) {
@@ -62,6 +77,18 @@ function fmt_parameters_short(obj) {
         '">Args</acronym>';
     }
     return res;
+}
+
+function short_conn(name) {
+    var pat = /^(.*)->/;
+    var match = pat.exec(name);
+    return (match != null && match.length == 2) ? match[1] : name;
+}
+
+function short_chan(name) {
+    var pat = /^(.*)->.*( \(.*\))/;
+    var match = pat.exec(name);
+    return (match != null && match.length == 3) ? match[1] + match[2] : name;
 }
 
 function args_to_params(obj) {
@@ -205,7 +232,7 @@ function fmt_exchange_type(type) {
             return fmt_escape_html(type);
         }
     }
-    return '<div class="red"><acronym title="Exchange type not found. ' +
+    return '<div class="status-red"><acronym title="Exchange type not found. ' +
         'Publishing to this exchange will fail.">' + fmt_escape_html(type) +
         '</acronym></div>';
 }
@@ -220,9 +247,9 @@ function fmt_download_filename(host) {
         (now.getMonth() + 1) + "-" + now.getDate() + ".json";
 }
 
-function fmt_fd_used(used) {
+function fmt_fd_used(used, total) {
     if (used == 'install_handle_from_sysinternals') {
-        return '<a href="http://technet.microsoft.com/en-us/sysinternals/bb896655" title="Install handle.exe from sysinternals to see used file descriptors - click for the download page.">?</a>';
+        return '<p class="c">handle.exe missing <span class="help" id="handle-exe"></span><sub>' + total + ' available</sub></p>';
     }
     else {
         return used;
@@ -256,10 +283,14 @@ function fmt_amqp_value(val) {
         return val2.join("<br/>");
     } else if (val instanceof Object) {
         return fmt_table_short(val);
-    } else if (typeof(val) == 'string') {
-        return fmt_escape_html(val);
     } else {
-        return val;
+        var t = typeof(val);
+        if (t == 'string') {
+            return '<acronym class="type" title="string">' +
+                fmt_escape_html(val) + '</acronym>';
+        } else {
+            return '<acronym class="type" title="' + t + '">' + val + '</acronym>';
+        }
     }
 }
 
@@ -300,15 +331,6 @@ function fmt_uptime(u) {
         return hour + 'h ' + min + 'm';
     else
         return min + 'm ' + sec + 's';
-}
-
-function fmt_rabbit_version(applications) {
-    for (var i in applications) {
-        if (applications[i].name == 'rabbit') {
-            return applications[i].version;
-        }
-    }
-    return 'unknown';
 }
 
 function fmt_idle(obj) {
@@ -363,11 +385,11 @@ function fmt_maybe_wrap(txt, encoding) {
     return fmt_escape_html(res);
 }
 
-function fmt_node_host(node_host) {
+function fmt_node(node_host) {
     var both = node_host.split('@');
     var node = both.slice(0, 1);
     var host = both.slice(1);
-    return host + ' <small>(' + node_host + ')</small>';
+    return '<small>' + node + '@</small>' + host;
 }
 
 function fmt_connection_state(conn) {
@@ -377,13 +399,13 @@ function fmt_connection_state(conn) {
     var text = conn.state;
     var explanation;
 
-    if (conn.last_blocked_by == 'mem' && conn.state == 'blocked') {
+    if (conn.last_blocked_by == 'resource' && conn.state == 'blocked') {
         colour = 'red';
-        explanation = 'Memory alarm: Connection blocked.';
+        explanation = 'Resource alarm: Connection blocked.';
     }
     else if (conn.state == 'blocking') {
         colour = 'yellow';
-        explanation = 'Memory alarm: Connection will block on publish.';
+        explanation = 'Resource alarm: Connection will block on publish.';
     }
     else if (conn.last_blocked_by == 'flow') {
         var age = conn.last_blocked_age.toFixed();
@@ -395,12 +417,77 @@ function fmt_connection_state(conn) {
     }
 
     if (explanation) {
-        return '<div class="' + colour + '"><acronym title="' + explanation +
-            '">' + text + '</acronym></div>';
+        return '<div class="status-' + colour + '"><acronym title="' +
+            explanation + '">' + text + '</acronym></div>';
     }
     else {
-        return '<div class="' + colour + '">' + text + '</div>';
+        return '<div class="status-' + colour + '">' + text + '</div>';
     }
+}
+
+function fmt_resource_bar(used_label, limit_label, ratio, colour, help) {
+    var width = 120;
+
+    var res = '';
+    var other_colour = colour;
+    if (ratio > 1) {
+        ratio = 1 / ratio;
+        inverted = true;
+        colour += '-dark';
+    }
+    else {
+        other_colour += '-dark';
+    }
+    var offset = Math.round(width * (1 - ratio));
+
+    res += '<div class="status-bar" style="width: ' + width + 'px;">';
+    res += '<div class="status-bar-main ' + colour + '" style="background-image: url(img/bg-' + other_colour + '.png); background-position: -' + offset + 'px 0px; background-repeat: no-repeat;">';
+    res += used_label;
+    if (help != null) {
+        res += ' <span class="help" id="' + help + '"></span>';
+    }
+    res += '</div>'; // status-bar-main
+    if (limit_label != null) {
+        res += '<sub>' + limit_label + '</sub>';
+    }
+    res += '</div>'; // status-bar
+    return res;
+}
+
+function fmt_resource_bar_count(used, total, thresholds) {
+    if (typeof used == 'number') {
+        return fmt_resource_bar(used, total + ' available', used / total,
+                                fmt_color(used / total, thresholds));
+    } else {
+        return used;
+    }
+}
+
+function fmt_shortened_uri(uri0) {
+    var uri = fmt_escape_html(uri0);
+    if (uri.indexOf('?') == -1) {
+        return uri;
+    }
+    else {
+        return '<acronym title="' + uri + '">' +
+            uri.substr(0, uri.indexOf('?')) + '?...</acronym>';
+    }
+}
+
+function fmt_client_name(properties) {
+    var res = [];
+    if (properties.product != undefined) {
+        res.push(properties.product);
+    }
+    if (properties.platform != undefined) {
+        res.push(properties.platform);
+    }
+    res = res.join(" / ");
+
+    if (properties.version != undefined) {
+        res += '<sub>' + properties.version + '</sub>';
+    }
+    return res;
 }
 
 function alt_rows(i) {
@@ -411,12 +498,13 @@ function esc(str) {
     return encodeURIComponent(str);
 }
 
-function link_conn(name) {
-    return _link_to(fmt_escape_html(name), '#/connections/' + esc(name))
+function link_conn(name, desc) {
+    if (desc == undefined) desc = short_conn(name);
+    return _link_to(fmt_escape_html(desc), '#/connections/' + esc(name))
 }
 
 function link_channel(name) {
-    return _link_to(fmt_escape_html(name), '#/channels/' + esc(name))
+    return _link_to(fmt_escape_html(short_chan(name)), '#/channels/' + esc(name))
 }
 
 function link_exchange(vhost, name) {
@@ -440,6 +528,10 @@ function link_node(name) {
     return _link_to(fmt_escape_html(name), '#/nodes/' + esc(name))
 }
 
+function link_policy(vhost, name) {
+    return _link_to(fmt_escape_html(name), '#/policies/' + esc(vhost) + '/' + esc(name))
+}
+
 function _link_to(name, url) {
     return '<a href="' + url + '">' + name + '</a>';
 }
@@ -453,8 +545,7 @@ function message_rates(stats) {
                      ['Acknowledge', 'ack'],
                      ['Get', 'get'], ['Deliver (noack)', 'deliver_no_ack'],
                      ['Get (noack)', 'get_no_ack'],
-                     ['Return (mandatory)', 'return_unroutable'],
-                     ['Return (immediate)', 'return_not_delivered']];
+                     ['Return', 'return_unroutable']];
         for (var i in items) {
             var name = items[i][0];
             var key = items[i][1] + '_details';

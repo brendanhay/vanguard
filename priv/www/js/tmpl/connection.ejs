@@ -29,7 +29,7 @@
 <% if (nodes_interesting) { %>
 <tr>
   <th>Node</th>
-  <td><%= fmt_string(connection.node) %></td>
+  <td><%= fmt_node(connection.node) %></td>
 </tr>
 <% } %>
 <% if (vhosts_interesting) { %>
@@ -66,11 +66,11 @@
 <table class="facts">
 <tr>
  <th>State</th>
- <td class="status"><%= fmt_connection_state(connection) %></td>
+ <td><%= fmt_connection_state(connection) %></td>
 </tr>
 <tr>
  <th>Timeout</th>
- <td><% if (connection.timeout != 0) { %><%= connection.timeout %>s<% } %></td>
+ <td><%= fmt_time(connection.timeout, 's') %></td>
 </tr>
 <tr>
  <th>Frame max</th>

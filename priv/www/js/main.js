@@ -1,9 +1,6 @@
 $(document).ready(function() {
-    setup_global_vars();
-    setup_constant_events();
-    update_vhosts();
-    update_interval();
-    setup_extensions();
+    replace_content('outer', format('login', {}));
+    start_app_login();
 });
 
 function dispatcher_add(fun) {
@@ -19,8 +16,56 @@ function dispatcher() {
     }
 }
 
+function start_app_login() {
+    app = new Sammy.Application(function () {
+        this.put('#/login', function() {
+            username = this.params['username'];
+            password = this.params['password'];
+            var b64 = b64_encode_utf8(username + ':' + password);
+            document.cookie = 'auth=' + encodeURIComponent(b64);
+            check_login();
+        });
+    });
+    app.run();
+    if (get_cookie('auth') != '') {
+        check_login();
+    }
+}
+
+function check_login() {
+    var user = JSON.parse(sync_get('/whoami'));
+    if (user == false) {
+        document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        replace_content('login-status', '<p>Login failed</p>');
+    }
+    else {
+        replace_content('outer', format('layout', {}));
+        setup_global_vars(user);
+        setup_constant_events();
+        update_vhosts();
+        update_interval();
+        setup_extensions();
+    }
+}
+
 function start_app() {
-    app = $.sammy(dispatcher);
+    app.unload();
+    // Oh boy. Sammy uses various different methods to determine if
+    // the URL hash has changed. Unsurprisingly this is a native event
+    // in modern browsers, and falls back to an icky polling function
+    // in MSIE. But it looks like there's a bug. The polling function
+    // should get installed when the app is started. But it's guarded
+    // behind if (Sammy.HashLocationProxy._interval != null). And of
+    // course that's not specific to the application; it's pretty
+    // global. So we need to manually clear that in order for links to
+    // work in MSIE.
+    // Filed as https://github.com/quirkey/sammy/issues/171
+    //
+    // Note for when we upgrade: HashLocationProxy has become
+    // DefaultLocationProxy in later versions, but otherwise the issue
+    // remains.
+    Sammy.HashLocationProxy._interval = null;
+    app = new Sammy.Application(dispatcher);
     app.run();
     var url = this.location.toString();
     if (url.indexOf('#') == -1) {
@@ -70,11 +115,11 @@ function update_vhosts() {
 
 function setup_extensions() {
     var extensions = JSON.parse(sync_get('/extensions'));
+    extension_count = extensions.length;
     for (var i in extensions) {
         var extension = extensions[i];
         dynamic_load(extension.javascript);
     }
-    extension_count = extensions.length;
 }
 
 function dynamic_load(filename) {
@@ -122,6 +167,19 @@ function reset_timer() {
     }
 }
 
+function update_manual(div, query) {
+    var path;
+    var template;
+    if (query == 'memory') {
+        path = current_reqs['node'] + '?memory=true';
+        template = 'memory';
+    }
+    var data = JSON.parse(sync_get(path));
+
+    replace_content(div, format(template, data));
+    postprocess_partial();
+}
+
 function render(reqs, template, highlight) {
     current_template = template;
     current_reqs = reqs;
@@ -132,6 +190,7 @@ function render(reqs, template, highlight) {
 function update() {
     clearInterval(timer);
     with_update(function(html) {
+            update_navigation();
             replace_content('main', html);
             postprocess();
             postprocess_partial();
@@ -162,6 +221,85 @@ function partial_update() {
             postprocess_partial();
         });
     }
+}
+
+function update_navigation() {
+    var l1 = '';
+    var l2 = '';
+    var descend = null;
+
+    for (var k in NAVIGATION) {
+        var val = NAVIGATION[k];
+        var path = val;
+        while (!leaf(path)) {
+            path = path[keys(path)[0]];
+        }
+        var selected = false;
+        if (contains_current_highlight(val)) {
+            selected = true;
+            if (!leaf(val)) {
+                descend = nav(val);
+            }
+        }
+        if (show(path)) {
+            l1 += '<li><a href="' + nav(path) + '"' +
+                (selected ? ' class="selected"' : '') + '>' + k + '</a></li>';
+        }
+    }
+
+    if (descend) {
+        l2 = obj_to_ul(descend);
+        $('#main').addClass('with-rhs');
+    }
+    else {
+        $('#main').removeClass('with-rhs');
+    }
+
+    replace_content('tabs', l1);
+    replace_content('rhs', l2);
+}
+
+function nav(pair) {
+    return pair[0];
+}
+
+function show(pair) {
+    return !pair[1] || user_administrator;
+}
+
+function leaf(pair) {
+    return typeof(nav(pair)) == 'string';
+}
+
+function contains_current_highlight(val) {
+    if (leaf(val)) {
+        return current_highlight == nav(val);
+    }
+    else {
+        var b = false;
+        for (var k in val) {
+            b |= contains_current_highlight(val[k]);
+        }
+        return b;
+    }
+}
+
+function obj_to_ul(val) {
+    var res = '<ul>';
+    for (var k in val) {
+        res += '<li>';
+        var obj = val[k];
+        if (leaf(obj) && show(obj)) {
+            res += '<a href="' + nav(obj) + '"' +
+                (current_highlight == nav(obj) ? ' class="selected"' : '') +
+                '>' + k + '</a>';
+        }
+        else {
+            res += obj_to_ul(nav(obj));
+        }
+        res += '</li>';
+    }
+    return res + '</ul>';
 }
 
 function full_refresh() {
@@ -208,7 +346,7 @@ function apply_state(reqs) {
     for (k in reqs) {
         var req = reqs[k];
         var req2;
-        if (req in VHOST_QUERIES && current_vhost != '') {
+        if (vhost_query(req) && current_vhost != '') {
             req2 = req + '/' + esc(current_vhost);
         }
         else {
@@ -226,6 +364,14 @@ function apply_state(reqs) {
     return reqs2;
 }
 
+function vhost_query(req) {
+    for (i in VHOST_QUERIES) {
+        var query = VHOST_QUERIES[i];
+        if (req.match(query)) return true;
+    }
+    return false;
+}
+
 function show_popup(type, text) {
     var cssClass = '.form-popup-' + type;
     function hide() {
@@ -241,8 +387,6 @@ function show_popup(type, text) {
 }
 
 function postprocess() {
-    $('a').removeClass('selected');
-    $('a[href="' + current_highlight + '"]').addClass('selected');
     $('form.confirm').submit(function() {
             return confirm("Are you sure? This object cannot be recovered " +
                            "after deletion.");
@@ -266,6 +410,9 @@ function postprocess() {
             window.location = path;
             setTimeout('app.run()');
             return false;
+        });
+    $('.update-manual').click(function() {
+            update_manual($(this).attr('for'), $(this).attr('query'));
         });
     $('input, select').die();
     $('.multifield input').live('blur', function() {
@@ -331,12 +478,23 @@ function update_multifields() {
                     }
                 });
             if (!empty_found) {
-                $(this).append('<p><input type="text" name="' + name + '_' +
-                               (largest_id + 1) +
+                var prefix = name + '_' + (largest_id + 1);
+                var type_part;
+                if ($(this).hasClass('string-only')) {
+                    type_part = '<input type="hidden" name="' + prefix +
+                        '_mftype" value="string"/>';
+                } else {
+                    type_part = '<select name="' + prefix +
+                        '_mftype">' +
+                        '<option value="string">String</option>' +
+                        '<option value="number">Number</option>' +
+                        '<option value="boolean">Boolean</option>' +
+                        '</select>';
+                }
+                $(this).append('<p><input type="text" name="' + prefix +
                                '_mfkey" value=""/> = ' +
-                               '<input type="text" name="' + name + '_' +
-                               (largest_id + 1) +
-                               '_mfvalue" value=""/></p>');
+                               '<input type="text" name="' + prefix +
+                               '_mfvalue" value=""/> ' + type_part + '</p>');
             }
         });
 }
@@ -470,10 +628,15 @@ function update_status(status) {
     replace_content('status', html);
 }
 
+function auth_header() {
+    return "Basic " + decodeURIComponent(get_cookie('auth'));
+}
+
 function with_req(method, path, body, fun) {
     var json;
     var req = xmlHttpRequest();
     req.open(method, 'api' + path, true );
+    req.setRequestHeader('authorization', auth_header());
     req.onreadystatechange = function () {
         if (req.readyState == 4) {
             if (check_bad_response(req, true)) {
@@ -514,6 +677,7 @@ function sync_req(type, params0, path_template) {
     var req = xmlHttpRequest();
     req.open(type, 'api' + path, false);
     req.setRequestHeader('content-type', 'application/json');
+    req.setRequestHeader('authorization', auth_header());
     try {
         if (type == 'GET')
             req.send(null);
@@ -598,7 +762,8 @@ function collapse_multifields(params0) {
     for (key in params0) {
         var match = key.match(/([a-z]*)_([0-9]*)_mfkey/);
         var match2 = key.match(/[a-z]*_[0-9]*_mfvalue/);
-        if (match == null && match2 == null) {
+        var match3 = key.match(/[a-z]*_[0-9]*_mftype/);
+        if (match == null && match2 == null && match3 == null) {
             params[key] = params0[key];
         }
         else if (match == null) {
@@ -613,7 +778,21 @@ function collapse_multifields(params0) {
             if (params0[key] != "") {
                 var k = params0[key];
                 var v = params0[name + '_' + id + '_mfvalue'];
-                params[name][k] = v;
+                var t = params0[name + '_' + id + '_mftype'];
+                if (t == 'boolean') {
+                    if (v != 'true' && v != 'false')
+                        throw(k + ' must be "true" or "false"; got ' + v);
+                    params[name][k] = (v == 'true');
+                }
+                else if (t == 'number') {
+                    var n = parseFloat(v);
+                    if (isNaN(n))
+                        throw(k + ' must be a number; got ' + v);
+                    params[name][k] = n;
+                }
+                else {
+                    params[name][k] = v;
+                }
             }
         }
     }
@@ -666,6 +845,46 @@ function maybe_remove_fields(params) {
     return params;
 }
 
+function put_parameter(sammy, mandatory_keys, num_keys, bool_keys) {
+    for (var i in sammy.params) {
+        if (i === 'length' || !sammy.params.hasOwnProperty(i)) continue;
+        if (sammy.params[i] == '' && mandatory_keys.indexOf(i) == -1) {
+            delete sammy.params[i];
+        }
+        else if (num_keys.indexOf(i) != -1) {
+            sammy.params[i] = parseInt(sammy.params[i]);
+        }
+        else if (bool_keys.indexOf(i) != -1) {
+            sammy.params[i] = sammy.params[i] == 'true';
+        }
+    }
+    var params = {"component": sammy.params.component,
+                  "vhost":     sammy.params.vhost,
+                  "name":      sammy.params.name,
+                  "value":     params_magic(sammy.params)};
+    delete params.value.vhost;
+    delete params.value.component;
+    delete params.value.name;
+    sammy.params = params;
+    if (sync_put(sammy, '/parameters/:component/:vhost/:name')) update();
+}
+
+function put_policy(sammy, mandatory_keys, num_keys, bool_keys) {
+    for (var i in sammy.params) {
+        if (i === 'length' || !sammy.params.hasOwnProperty(i)) continue;
+        if (sammy.params[i] == '' && mandatory_keys.indexOf(i) == -1) {
+            delete sammy.params[i];
+        }
+        else if (num_keys.indexOf(i) != -1) {
+            sammy.params[i] = parseInt(sammy.params[i]);
+        }
+        else if (bool_keys.indexOf(i) != -1) {
+            sammy.params[i] = sammy.params[i] == 'true';
+        }
+    }
+    if (sync_put(sammy, '/policies/:vhost/:name')) update();
+}
+
 function debug(str) {
     $('<p>' + str + '</p>').appendTo('#debug');
 }
@@ -689,6 +908,19 @@ function xmlHttpRequest() {
         res = new ActiveXObject("Microsoft.XMLHttp");
     }
     return res;
+}
+
+// Our base64 library takes a string that is really a byte sequence,
+// and will throw if given a string with chars > 255 (and hence not
+// DTRT for chars > 127). So encode a unicode string as a UTF-8
+// sequence of "bytes".
+function b64_encode_utf8(str) {
+    return base64.encode(encode_utf8(str));
+}
+
+// encodeURIComponent handles utf-8, unescape does not. Neat!
+function encode_utf8(str) {
+  return unescape(encodeURIComponent(str));
 }
 
 (function($){
