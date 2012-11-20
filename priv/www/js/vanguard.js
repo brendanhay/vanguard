@@ -31,9 +31,9 @@ var vanguard = {
                 ' value="' + val + '">' + val + '</option>'
         }).reverse().join('');
 
-        return '<p><label for="' + id +
+        return $('<div style="float: left; padding: 4px 16px;"><label for="' + id +
             '">Topology: </label><select id="' + id + '">' +
-            options + '</select></p>'
+            options + '</select></div>');
     }
 
 };
@@ -41,9 +41,10 @@ var vanguard = {
 $(document).ready(function() {
 
     vanguard.getTopologies(function(values) {
-        id = 'topologies';
+        id   = 'topologies';
+        elem = vanguard.selectElement(id, values);
 
-        $('#login p').replaceWith(vanguard.selectElement(id, values));
+        $('#login-version').prepend(elem);
 
         $('#' + id).change(function() {
             vanguard.setTopology($(this).val());
@@ -51,5 +52,4 @@ $(document).ready(function() {
             window.location.href = '';
         });
     });
-
 });
