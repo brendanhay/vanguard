@@ -66,6 +66,8 @@ merge(L, _R) -> L.
 -spec merge_properties(A, A) -> A.
 %% @private
 %% Properties
+merge_properties([], R = [{_, _}|_]) ->
+    lists:keysort(1, R);
 merge_properties([], R) ->
     R;
 merge_properties([{K, LV}|L], R) ->
